@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Windows, os: windows-latest }
+          - { name: Linux,   os: ubuntu-22.04 }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # JUCE needs these to build anything with a GUI on Linux. webkit is not
+      # in the list because JUCE_WEB_BROWSER is off.
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libx11-dev libxext-dev \
+            libxrandr-dev libxcursor-dev libxinerama-dev libxcomposite-dev \
+            libfreetype6-dev libfontconfig1-dev libgl1-mesa-dev
+
+      - name: Fetch fonts
+        shell: bash
+        run: ./Tools/fetch_fonts.sh
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: Build
+        run: cmake --build build --config RelWithDebInfo --parallel 4
+
+      # The DSP tests are headless by design, so they run everywhere without a
+      # display server.
+      - name: Unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Fit benchmark
+        shell: bash
+        run: |
+          find build -name "GraphiteFitBench*" -type f -perm -u+x -exec {} 24 \;
+
+      - name: Fetch pluginval
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            curl -fsSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.3/pluginval_Windows.zip
+          else
+            curl -fsSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.3/pluginval_Linux.zip
+          fi
+          7z x pluginval.zip -aoa
+
+      # Strictness 10, as CONTEXT.md 11 requires. --skip-gui-tests only on
+      # Linux CI, which has no display server; the GUI tests do run locally and
+      # on Windows.
+      - name: pluginval
+        shell: bash
+        run: |
+          VST3=$(find build -name "*.vst3" | head -1)
+          echo "validating $VST3"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            ./pluginval --strictness-level 10 --skip-gui-tests --validate "$VST3"
+          else
+            ./pluginval.exe --strictness-level 10 --validate "$VST3"
+          fi
+
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: GRAPHITE-${{ matrix.name }}
+          path: build/Graphite_artefacts/RelWithDebInfo/VST3
