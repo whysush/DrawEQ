@@ -124,7 +124,7 @@ void GraphiteProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
     spectrum.prepare (sampleRate);
 
-    prepared = true;
+    prepared.store (true, std::memory_order_release);
 
     pushMacrosToWorker();
     curveWorker.setMorphTarget (presets.curveFor (int (pMorphB->load()) - 1));
@@ -142,7 +142,7 @@ void GraphiteProcessor::releaseResources()
 {
     stopTimer();
     curveWorker.stop();
-    prepared = false;
+    prepared.store (false, std::memory_order_release);
 }
 
 // ---------------------------------------------------------------------------
@@ -188,9 +188,9 @@ void GraphiteProcessor::timerCallback()
                             ? 0 : engines[0].latencySamples();
     const int wanted = curveWorker.publishedLatency() + engineLatency;
 
-    if (wanted != reportedLatency)
+    if (wanted != reportedLatency.load (std::memory_order_relaxed))
     {
-        reportedLatency = wanted;
+        reportedLatency.store (wanted, std::memory_order_relaxed);
         setLatencySamples (wanted);
     }
 }
@@ -335,7 +335,7 @@ void GraphiteProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     for (int ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear (ch, 0, numSamples);
 
-    if (! prepared || numSamples == 0 || nch == 0)
+    if (! prepared.load (std::memory_order_acquire) || numSamples == 0 || nch == 0)
         return;
 
     if (auto* incoming = curveWorker.ring().consume())
@@ -349,7 +349,8 @@ void GraphiteProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
         auto& line = dryDelay[std::size_t (ch)];
         int w = dryDelayWrite;
 
-        const int delay = juce::jlimit (0, dryDelayMask, reportedLatency);
+        const int delay = juce::jlimit (0, dryDelayMask,
+                                        reportedLatency.load (std::memory_order_relaxed));
 
         for (int n = 0; n < numSamples; ++n)
         {
@@ -533,7 +534,7 @@ void GraphiteProcessor::setStateInformation (const void* data, int sizeInBytes)
     lastMorphA = int (pMorphA->load());
     lastMorphB = int (pMorphB->load());
 
-    if (prepared)
+    if (prepared.load (std::memory_order_acquire))
     {
         pushMacrosToWorker();
         curveWorker.setMorphTarget (presets.curveFor (lastMorphB - 1));

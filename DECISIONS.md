@@ -161,3 +161,38 @@ host frame still drive it - and the canvas draws its own crosshair hairlines, so
 nothing visible is lost there either.
 
 Worth revisiting against a newer JUCE before Linux becomes a real target.
+
+---
+
+## Measured performance
+
+From `GraphiteFitBench` and the timing assertions in `TestCurveFitter`, on a
+12-core desktop at 48 kHz. CONTEXT.md 10 asks for these to be stated rather than
+quietly shipped past.
+
+| Path | Budget | Measured |
+|---|---|---|
+| Worker, warm fit, 12 bands | < 2 ms | **0.97 ms** |
+| Worker, cold fit, 24 bands | < 50 ms | **28.5 ms** |
+| Worker, IR rebuild, L = 4096 | < 8 ms | within budget |
+
+**Worth knowing:** the warm-fit budget is specified at 12 bands, which is the
+default and which passes comfortably. At the maximum of 24 bands a warm fit
+takes **2.0-2.4 ms**. No stated budget covers that case, and it is not a
+problem - the worker runs at 30 Hz, so 2.4 ms is 7 % of its 33 ms period, and it
+is not the audio thread - but anyone reading the 2 ms figure should know it
+applies to 12 bands and not to 24.
+
+Getting there needed one optimisation. The first working fitter missed both
+budgets (2.7 ms warm, 79 ms cold) because `tan`, `pow` and `log` were being
+evaluated for every (band, frequency) pair. Tabulating `tan (pi f / fs)` per
+evaluation point and hoisting the per-band constants out of the inner loop -
+`response::BandEval` - cut both by roughly 2.8x. The readable closed form in
+`response::bandDb` is still the reference, and a test asserts the fast path
+agrees with it to a thousandth of a dB.
+
+The audio-thread budgets in CONTEXT.md 10 (CPU percentages under a real host)
+have **not** been measured: that needs a host and a profiler, and this machine
+has neither FL Studio nor a calibrated reference. What has been verified is the
+harder invariant behind them - `TestRealtimeSafety` proves the audio path never
+allocates, under a global allocation trap, in both modes and mid-crossfade.

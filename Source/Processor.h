@@ -106,8 +106,12 @@ private:
 
     double sr = 48000.0;
     int    maxBlock = 512;
-    int    reportedLatency = 0;
-    bool   prepared = false;
+
+    // Written on the message thread, read on the audio thread. Plain ints would
+    // be a data race - benign in practice on every architecture we target, and
+    // still undefined behaviour that a sanitiser will rightly complain about.
+    std::atomic<int>  reportedLatency { 0 };
+    std::atomic<bool> prepared { false };
 
     // Cached parameter pointers: reading these is a relaxed atomic load, which
     // is the only kind of parameter access allowed on the audio thread.
