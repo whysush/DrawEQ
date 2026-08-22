@@ -18,50 +18,112 @@ namespace graphite::icons
     same units, so the caller scales the stroke width alongside the path.
 */
 
-/** Pencil: hexagonal barrel, a collar, a tapered shoulder, and a graphite tip.
+/**
+    Pencil.
 
-    The collar is what makes it legible at 20 px. Without it the shape reads as
-    a plain wedge, which is the flaw in most small pencil icons - and the reason
-    a pencil and an eraser drawn as bare quadrilaterals look like each other. */
+    Built from one axis rather than drawn by eye, so every edge is derived and
+    the pieces share exact vertices instead of nearly meeting. The silhouette is
+    a half-width profile swept along a 45 degree axis:
+
+        t = 0.00   half width 0        the point
+        t = 0.17   half width 0.062    graphite meets wood
+        t = 0.33   half width 0.140    the shoulder reaches full barrel
+        t = 1.00   half width 0.140    the flat end
+
+    So the outline tapers to an actual point, which is what the previous version
+    was missing: it was an untapered parallelogram with two detached triangles
+    floating near it, and at 30 px that reads as a blob rather than a pencil.
+*/
+namespace detail
+{
+    struct PencilAxis
+    {
+        // 45 degrees, tip at lower left. Chosen so the whole silhouette lands
+        // inside the unit box with a hair of margin at both extremes.
+        static constexpr float tipX   = 0.150f;
+        static constexpr float tipY   = 0.850f;
+        static constexpr float dirX   =  0.70710678f;
+        static constexpr float dirY   = -0.70710678f;
+        static constexpr float perpX  =  0.70710678f;
+        static constexpr float perpY  =  0.70710678f;
+        static constexpr float length = 1.0000f;
+
+        static constexpr float graphiteEnd  = 0.17f;
+        static constexpr float shoulderEnd  = 0.33f;
+        static constexpr float ferruleFrom  = 0.68f;
+        static constexpr float ferruleTo    = 0.80f;
+        // Wide enough that a two pixel outline still leaves an open interior.
+        // At the previous 0.105 the barrel was six pixels across and a three
+        // pixel stroke closed it up into a solid stick.
+        static constexpr float halfWidth    = 0.140f;
+        static constexpr float graphiteHalf = 0.062f;
+
+        /** Point at distance `t` along the axis (0 = tip, 1 = end), offset by
+            `halfW` across it. Every vertex in every pencil path comes from
+            here, which is what keeps the pieces registered to each other. */
+        static juce::Point<float> at (float t, float halfW) noexcept
+        {
+            const float along = t * length;
+            return { tipX + dirX * along + perpX * halfW,
+                     tipY + dirY * along + perpY * halfW };
+        }
+    };
+}
+
+/** The full outline: point, graphite flank, shoulder, barrel, flat end. */
 inline juce::Path pencil()
 {
+    using A = detail::PencilAxis;
+
     juce::Path p;
-
-    // Barrel, running from lower-left to upper-right at 45 degrees.
-    p.startNewSubPath (0.16f, 0.84f);   // tip
-    p.lineTo (0.10f, 0.90f);            // the point's underside
-    p.lineTo (0.16f, 0.96f);
+    p.startNewSubPath (A::at (0.0f, 0.0f));
+    p.lineTo (A::at (A::graphiteEnd,  A::graphiteHalf));
+    p.lineTo (A::at (A::shoulderEnd,  A::halfWidth));
+    p.lineTo (A::at (1.0f,            A::halfWidth));
+    p.lineTo (A::at (1.0f,           -A::halfWidth));
+    p.lineTo (A::at (A::shoulderEnd, -A::halfWidth));
+    p.lineTo (A::at (A::graphiteEnd, -A::graphiteHalf));
     p.closeSubPath();
-
-    juce::Path barrel;
-    barrel.startNewSubPath (0.20f, 0.80f);
-    barrel.lineTo (0.72f, 0.28f);
-    barrel.lineTo (0.86f, 0.42f);
-    barrel.lineTo (0.34f, 0.94f);
-    barrel.closeSubPath();
-    p.addPath (barrel);
-
-    // Collar: the ferrule band, a short bar across the barrel near the top.
-    juce::Path collar;
-    collar.startNewSubPath (0.64f, 0.20f);
-    collar.lineTo (0.78f, 0.34f);
-    collar.lineTo (0.72f, 0.40f);
-    collar.lineTo (0.58f, 0.26f);
-    collar.closeSubPath();
-    p.addPath (collar);
-
     return p;
 }
 
-/** The pencil's graphite tip, drawn filled so the point reads as the business
-    end rather than as an empty corner. */
+/** The exposed graphite: the cone from the point to the wood line. Filled, so
+    the business end is unmistakably the business end. */
 inline juce::Path pencilTip()
 {
+    using A = detail::PencilAxis;
+
     juce::Path p;
-    p.startNewSubPath (0.20f, 0.80f);
-    p.lineTo (0.34f, 0.94f);
-    p.lineTo (0.16f, 0.98f);
+    p.startNewSubPath (A::at (0.0f, 0.0f));
+    p.lineTo (A::at (A::graphiteEnd,  A::graphiteHalf));
+    p.lineTo (A::at (A::graphiteEnd, -A::graphiteHalf));
     p.closeSubPath();
+    return p;
+}
+
+/** The ferrule band across the barrel. Sharing the barrel's half width means
+    its ends sit exactly on the outline rather than just inside or just past it. */
+inline juce::Path pencilFerrule()
+{
+    using A = detail::PencilAxis;
+
+    juce::Path p;
+    p.startNewSubPath (A::at (A::ferruleFrom,  A::halfWidth));
+    p.lineTo (A::at (A::ferruleTo,    A::halfWidth));
+    p.lineTo (A::at (A::ferruleTo,   -A::halfWidth));
+    p.lineTo (A::at (A::ferruleFrom, -A::halfWidth));
+    p.closeSubPath();
+    return p;
+}
+
+/** The wood line where the sharpening stops - the shoulder, drawn across. */
+inline juce::Path pencilShoulder()
+{
+    using A = detail::PencilAxis;
+
+    juce::Path p;
+    p.startNewSubPath (A::at (A::shoulderEnd,  A::halfWidth));
+    p.lineTo (A::at (A::shoulderEnd, -A::halfWidth));
     return p;
 }
 

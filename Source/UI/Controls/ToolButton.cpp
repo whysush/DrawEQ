@@ -6,15 +6,21 @@ namespace graphite
 
 namespace
 {
-    /** Unit-box path -> button-sized path. Stroke widths are given in the same
-        unit space and scaled here too, so an icon keeps its weight at any UI
-        scale. */
+    /** Unit-box path -> button-sized path, landed on whole pixels.
+
+        The scale factor and both offsets are integers, so the unit box maps
+        onto an exact pixel rectangle: coordinate 0 is a pixel boundary and so
+        is coordinate 1. Without this the icon lands on fractional pixels and
+        every edge is smeared across two of them, which at 30 px is the
+        difference between a pencil and a smudge. A 45 degree edge still
+        antialiases - it has to - but it does so symmetrically and identically
+        in every cell, instead of differently in each one. */
     juce::AffineTransform fitTo (juce::Rectangle<float> area)
     {
-        const float side = juce::jmin (area.getWidth(), area.getHeight());
-        return juce::AffineTransform::scale (side, side)
-                   .translated (area.getCentreX() - side * 0.5f,
-                                area.getCentreY() - side * 0.5f);
+        const float side = std::floor (juce::jmin (area.getWidth(), area.getHeight()));
+        const float x = std::round (area.getCentreX() - side * 0.5f);
+        const float y = std::round (area.getCentreY() - side * 0.5f);
+        return juce::AffineTransform::scale (side, side).translated (x, y);
     }
 }
 
@@ -32,8 +38,12 @@ void ToolButton::drawIcon (juce::Graphics& g, Tool tool, juce::Rectangle<float> 
                            juce::Colour colour, float intensity)
 {
     const auto transform = fitTo (area);
-    const float side = juce::jmin (area.getWidth(), area.getHeight());
-    const float stroke = juce::jmax (1.4f, side * 0.088f);
+    const float side = std::floor (juce::jmin (area.getWidth(), area.getHeight()));
+
+    // Whole-pixel stroke width, for the same reason: a 2.37 px line is two
+    // grey rows, a 2 px line is two lit ones. Kept well under the narrowest
+    // feature it has to outline, or the stroke closes the shape up.
+    const float stroke = juce::jmax (1.0f, std::round (side * 0.070f));
 
     const auto strong = colour.withMultipliedAlpha (intensity);
     const auto faint  = colour.withMultipliedAlpha (intensity * 0.45f);
@@ -46,6 +56,16 @@ void ToolButton::drawIcon (juce::Graphics& g, Tool tool, juce::Rectangle<float> 
                                                juce::PathStrokeType::rounded));
     };
 
+    // Sharp corners: a pencil's shoulder and its flat end are hard edges, and
+    // rounding them at this size eats the taper that identifies the shape.
+    auto strokeSharp = [&] (juce::Path p, float width, juce::Colour c)
+    {
+        p.applyTransform (transform);
+        g.setColour (c);
+        g.strokePath (p, juce::PathStrokeType (width, juce::PathStrokeType::mitered,
+                                               juce::PathStrokeType::butt));
+    };
+
     auto fillPath = [&] (juce::Path p, juce::Colour c)
     {
         p.applyTransform (transform);
@@ -56,8 +76,12 @@ void ToolButton::drawIcon (juce::Graphics& g, Tool tool, juce::Rectangle<float> 
     switch (tool)
     {
         case Tool::pencil:
-            strokePath (icons::pencil(), stroke, strong);
+            strokeSharp (icons::pencil(), stroke, strong);
             fillPath (icons::pencilTip(), strong);
+            strokeSharp (icons::pencilShoulder(), stroke * 0.8f, strong);
+            // Filled, not outlined: at this size an outlined band is two lines
+            // three pixels apart and reads as noise on the barrel.
+            fillPath (icons::pencilFerrule(), faint);
             break;
 
         case Tool::line:
