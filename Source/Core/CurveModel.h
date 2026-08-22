@@ -111,6 +111,13 @@ private:
     float lastDb    = 0.0f;
     bool  strokeOpen = false;
 
+    // The span this gesture has already swept. A segment's feather must not
+    // reach back into it: those bins were placed correctly by an earlier
+    // segment, and feathering them again is what makes a stroke lag the cursor.
+    float sweptLo = 0.0f, sweptHi = 0.0f;
+    float sweptLoDb = 0.0f, sweptHiDb = 0.0f;   // the stroke's value at each extreme
+    bool  hasSwept = false;
+
     std::vector<CurveArray> undoStack, redoStack;
     bool gestureOpen = false;
 };

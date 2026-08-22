@@ -263,3 +263,40 @@ cannot tell which. The pencil gets a collar and a filled graphite tip; the
 eraser gets a blunt end, a two-tone sleeve, and a fragment of the line it is
 clearing. The node tool draws its handle as a **ring**, the same shape as a band
 token on the canvas, so the icon and the thing it manipulates match.
+
+---
+
+## The brush was rewritten to track the cursor
+
+CONTEXT.md 6.2 describes drawing as a raised-cosine dab per incoming point, with
+interpolation between mouse positions. Implemented literally, that lags: each
+dab pulls its neighbours toward *its own* target, so a bin painted early gets
+dragged most of the way to whatever the stroke does next, and a steep gesture
+comes out flattened and trailing the cursor.
+
+Measured on a 16 dB ramp drawn over 40 mouse positions, the worst deviation
+between where the cursor was and what the curve read back was **0.63 dB**.
+
+The brush is now a single swept pass per segment rather than a run of
+overlapping dabs. Each affected bin projects onto the segment, and a bin the
+stroke passes directly over is written to the stroke's value at that exact
+frequency, once. Two further rules were needed, and each was found by measuring
+rather than by reasoning:
+
+- **Ground the gesture has already covered is never re-feathered.** Without
+  this the trailing half of every brush drags finished bins toward wherever the
+  cursor has since moved. (0.63 -> 0.47 dB.)
+- **The skirt past each end aims at the value the stroke actually has on that
+  side** - the segment's own endpoint where the stroke is advancing, the value
+  recorded at the gesture's extreme where it is not. Getting this wrong in
+  either direction moves the error to the other end of the stroke: aiming the
+  trailing skirt at the current segment drags the stroke's origin away with
+  every mouse move, and aiming the leading skirt at the recorded extreme leaves
+  the newest ground one segment stale. (0.47 -> 0.26 -> **0.0077 dB**.)
+
+The residual is interpolation into the feather skirt at the two ends, not lag.
+`TestCurveModel` locks it at 0.02 dB.
+
+A visible consequence: fit errors went *up* slightly on the same gesture,
+because the fitter is now being asked to match what was actually drawn instead
+of a flattened version of it. That is the correct direction.

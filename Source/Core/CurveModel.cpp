@@ -48,6 +48,7 @@ void CurveModel::endGesture()
     const std::lock_guard<std::mutex> g (lock);
     gestureOpen = false;
     strokeOpen  = false;
+    hasSwept    = false;
 }
 
 void CurveModel::startStroke (float hz, float db)
@@ -56,6 +57,7 @@ void CurveModel::startStroke (float hz, float db)
     lastIndex  = LogGrid::clampIndex (LogGrid::hzToIndex (hz));
     lastDb     = LogGrid::clampDb (db);
     strokeOpen = true;
+    hasSwept   = false;
 }
 
 void CurveModel::strokeTo (float hz, float db, float radiusOctaves, float pressure, Brush brush)
@@ -70,6 +72,7 @@ void CurveModel::strokeTo (float hz, float db, float radiusOctaves, float pressu
         lastIndex  = idx;
         lastDb     = tgt;
         strokeOpen = true;
+        hasSwept   = false;
     }
 
     const float radiusBins = std::max (1.0f, LogGrid::octavesToBins (radiusOctaves));
@@ -156,20 +159,98 @@ void CurveModel::paintSegmentLocked (float idx0, float db0, float idx1, float db
 {
     const CurveArray source = grid;
 
-    const float span  = std::abs (idx1 - idx0);
-    // Step at half the brush radius: dense enough that the dabs overlap, sparse
-    // enough that a slow drag does not saturate the curve to the target in one
-    // frame (which would make `pressure` meaningless).
-    const float step  = std::max (0.5f, radiusBins * 0.25f);
-    const int   steps = std::max (1, int (std::ceil (span / step)));
+    const float lo = std::min (idx0, idx1);
+    const float hi = std::max (idx0, idx1);
 
-    for (int s = 1; s <= steps; ++s)
+    // The stroke's dB at each end of this segment, in index order.
+    const float dbAtLo = idx0 <= idx1 ? db0 : db1;
+    const float dbAtHi = idx0 <= idx1 ? db1 : db0;
+
+    // Is this segment breaking new ground, or moving back over ground the
+    // gesture has already covered? Each end is judged separately, because a
+    // stroke that reverses does both at once.
+    const bool extendsLow  = ! hasSwept || lo <= sweptLo;
+    const bool extendsHigh = ! hasSwept || hi >= sweptHi;
+
+    const int first = std::max (0, int (std::floor (lo - radiusBins)));
+    const int last  = std::min (LogGrid::kSize - 1, int (std::ceil (hi + radiusBins)));
+
+    const float span = idx1 - idx0;
+
+    // One pass over the affected bins, projecting each onto the segment, rather
+    // than a run of overlapping dabs.
+    //
+    // The dab version lagged the cursor. Each dab pulled its neighbours toward
+    // its own target, so a bin painted early was dragged most of the way to
+    // whatever the stroke did next, and a steep gesture came out flattened and
+    // trailing. Here a bin the stroke passes directly over is written to the
+    // stroke's value at that exact frequency, once.
+    for (int i = first; i <= last; ++i)
     {
-        const float t = float (s) / float (steps);
-        applyPointLocked (idx0 + t * (idx1 - idx0),
-                          db0 + t * (db1 - db0),
-                          radiusBins, pressure, brush, source);
+        const float pos = float (i);
+
+        // Projection onto the segment. In index space the segment is an
+        // interval, so this is a clamp, and `t` says where along the stroke the
+        // bin sits.
+        const float nearest = std::clamp (pos, lo, hi);
+        const float t = std::abs (span) > 1.0e-6f
+                      ? std::clamp ((nearest - idx0) / span, 0.0f, 1.0f)
+                      : 0.0f;
+
+        const float d = std::abs (pos - nearest) / radiusBins;
+
+        if (d >= 1.0f)
+            continue;
+
+        float target = db0 + t * (db1 - db0);
+
+        if (d > 0.0f && hasSwept)
+        {
+            // Ground the gesture has already passed over keeps what that pass
+            // gave it. Re-feathering finished bins is what made the stroke lag.
+            if (pos >= sweptLo && pos <= sweptHi)
+                continue;
+
+            // Outside the swept span, the skirt aims at whichever value the
+            // stroke really has on that side: the segment's own endpoint where
+            // the stroke is advancing, and the value recorded at the gesture's
+            // extreme where it is not. Using the segment's endpoint on the
+            // trailing side would drag the start of the stroke a little further
+            // with every mouse move; using the recorded extreme on the leading
+            // side would leave the newest ground one segment stale.
+            if (pos < lo)
+                target = extendsLow ? dbAtLo : sweptLoDb;
+            else
+                target = extendsHigh ? dbAtHi : sweptHiDb;
+        }
+
+        // Raised cosine: 1 under the stroke, 0 at the rim, zero slope at both
+        // ends so overlapping strokes leave no ridge.
+        const float w = 0.5f * (1.0f + std::cos (3.14159265358979f * d)) * pressure;
+
+        if (brush == Brush::erase)
+        {
+            target = 0.0f;
+        }
+        else if (brush == Brush::smooth)
+        {
+            const int n0 = std::max (0, i - int (radiusBins));
+            const int n1 = std::min (LogGrid::kSize - 1, i + int (radiusBins));
+            float sum = 0.0f;
+
+            for (int n = n0; n <= n1; ++n)
+                sum += source[size_t (n)];
+
+            target = sum / float (n1 - n0 + 1);
+        }
+
+        grid[size_t (i)] = LogGrid::clampDb (grid[size_t (i)] + w * (target - grid[size_t (i)]));
     }
+
+    if (extendsLow)  { sweptLo = lo; sweptLoDb = dbAtLo; }
+    if (extendsHigh) { sweptHi = hi; sweptHiDb = dbAtHi; }
+
+    hasSwept = true;
 }
 
 // ---------------------------------------------------------------------------
