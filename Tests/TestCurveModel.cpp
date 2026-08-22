@@ -2,6 +2,9 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "Core/CurveModel.h"
+#include "Core/Shapes.h"
+#include <string>
+#include <vector>
 
 using namespace graphite;
 using Catch::Matchers::WithinAbs;
@@ -194,4 +197,43 @@ TEST_CASE ("the curve lands where the cursor was", "[curve][accuracy]")
     // skirt at the two ends of the stroke rather than lag. The dab-based brush
     // this replaced scored 0.63 dB on the same path.
     REQUIRE (worst < 0.02);
+}
+
+TEST_CASE ("every starting shape is sane and distinct", "[shapes]")
+{
+    std::vector<CurveArray> built;
+
+    for (int i = 0; i < int (shapes::Shape::count); ++i)
+    {
+        const auto shape = shapes::Shape (i);
+        CurveArray c;
+        shapes::build (shape, 48000.0, c);
+
+        INFO ("shape: " << shapes::name (shape));
+
+        for (float v : c)
+        {
+            REQUIRE (std::isfinite (v));
+            REQUIRE (std::abs (v) <= LogGrid::kMaxDb + 1.0e-3f);
+        }
+
+        REQUIRE (std::string (shapes::name (shape)).length() > 0);
+        built.push_back (c);
+    }
+
+    // Flat must be flat, and nothing else may be: a menu entry that silently
+    // does nothing is worse than no entry.
+    for (float v : built[0])
+        REQUIRE_THAT (double (v), WithinAbs (0.0, 1.0e-6));
+
+    for (std::size_t i = 1; i < built.size(); ++i)
+    {
+        float peak = 0.0f;
+
+        for (float v : built[i])
+            peak = std::max (peak, std::abs (v));
+
+        INFO ("shape " << shapes::name (shapes::Shape (i)) << " peaks at " << peak);
+        REQUIRE (peak > 1.0f);
+    }
 }

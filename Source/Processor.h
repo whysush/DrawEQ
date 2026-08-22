@@ -3,6 +3,8 @@
 #include "Core/CurveModel.h"
 #include "Core/Params.h"
 #include "Core/PresetBank.h"
+#include "Core/Shapes.h"
+#include "Core/Shapes.h"
 #include "DSP/Analyzer.h"
 #include "DSP/BiquadCascade.h"
 #include "DSP/ConvolutionEngine.h"
@@ -72,6 +74,10 @@ public:
     /** Slot handling. The canvas always edits the slot named by `morphA`, so
         slot A is literally "what you drew" and morph moves from it toward slot
         B. That is what keeps morph continuous at zero. */
+    /** Replaces the drawn curve with a starting shape. One undo entry, and the
+        committed-quality fit, because a shape is a finished curve. */
+    void applyShape (shapes::Shape);
+
     void storeCurrentIntoSlot (int slot);
     void recallSlot (int slot);
     void clearSlot (int slot);

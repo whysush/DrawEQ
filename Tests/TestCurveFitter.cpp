@@ -3,6 +3,7 @@
 
 #include "DSP/CurveFitter.h"
 #include "Core/CurveShaping.h"
+#include "Core/Shapes.h"
 #include <chrono>
 
 using namespace graphite;
@@ -211,4 +212,47 @@ TEST_CASE ("cold start stays inside its budget at full band count", "[fitter][pe
     const double ms = std::chrono::duration<double, std::milli> (t1 - t0).count();
     INFO ("cold fit " << ms << " ms, max error " << r.maxErrorDb << " dB");
     REQUIRE (ms < 50.0);            // CONTEXT.md 10
+}
+
+TEST_CASE ("the starting shapes are shapes the filter can actually be", "[shapes][fitter]")
+{
+    // Shapes.h claims that building them from bells and shelves makes them
+    // reproducible by the Analog path. If that stopped being true, a user would
+    // pick a preset and watch MAX ERR jump for no visible reason.
+    //
+    // Bounds are set just above what is measured, not at some comfortable
+    // round number - a threshold with an order of magnitude of slack would
+    // never catch the regression it exists to catch.
+    struct Expectation { shapes::Shape shape; float maxDb; };
+
+    const std::vector<Expectation> expected {
+        { shapes::Shape::flat,       0.001f },
+        { shapes::Shape::smiley,     0.005f },
+        { shapes::Shape::warmTilt,   0.005f },
+        { shapes::Shape::brightTilt, 0.005f },
+        { shapes::Shape::deMud,      0.005f },
+        { shapes::Shape::presence,   0.005f },
+        { shapes::Shape::air,        0.005f },
+        // The slope-based shapes are steeper than any shelf - which is why they
+        // are drawn as slopes - and still land inside a quarter of a dB.
+        { shapes::Shape::vocal,      0.30f },
+        { shapes::Shape::rumbleCut,  0.30f },
+        { shapes::Shape::lowPass,    0.05f },
+        { shapes::Shape::telephone,  0.30f },
+    };
+
+    for (const auto& e : expected)
+    {
+        CurveArray target;
+        shapes::build (e.shape, kSr, target);
+
+        CurveFitter fitter;
+        fitter.prepare (kSr);
+        fitter.setBellCount (12);
+
+        const float err = fitter.fit (target, CurveFitter::Effort::deep).maxErrorDb;
+
+        INFO (shapes::name (e.shape) << " -> " << err << " dB");
+        REQUIRE (err <= e.maxDb);
+    }
 }

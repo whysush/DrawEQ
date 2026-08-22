@@ -53,6 +53,16 @@ private:
     juce::ComboBox analyserBox;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> analyserAttachment;
 
+    /** Starting shapes. Resets to its prompt after each pick, so the same shape
+        can be chosen twice in a row. */
+    juce::ComboBox shapeBox;
+
+    /** How faithfully the drawing is passed to the DSP. These are presets over
+        the `smooth` parameter, which is the thing that actually rounds a sharp
+        corner - the bar below them still works, and moving it just means none
+        of the three is lit. */
+    std::array<juce::TextButton, 3> fidelityButtons;
+
     // Regions painted rather than occupied by a child, kept so the status
     // readouts can be repainted without redrawing the canvas.
     juce::Rectangle<int> canvasPanelArea, canvasHeaderArea, toolBarArea, sidebarArea,

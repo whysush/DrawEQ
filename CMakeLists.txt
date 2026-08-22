@@ -26,6 +26,7 @@ include (cmake/Dependencies.cmake)
 set (GRAPHITE_DSP_SOURCES
     Source/Core/CurveModel.cpp
     Source/Core/PresetBank.cpp
+    Source/Core/Shapes.cpp
     Source/DSP/Cepstrum.cpp
     Source/DSP/IRBuilder.cpp
     Source/DSP/ConvolutionEngine.cpp

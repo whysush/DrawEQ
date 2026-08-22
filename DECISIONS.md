@@ -401,3 +401,41 @@ Only the line was wrong.
 
 On a normal drawn curve the result is now 0.10 dB of fit error with the ghost
 invisible beneath the plot, which is what "1:1" should look like.
+
+---
+
+## Starting shapes, and fidelity as a button rather than a slider
+
+Two requests, from the observation that sharp turns in a drawn curve came back
+as smooth arcs.
+
+**The arcs were the old smoothing default**, already fixed in the entry above.
+Measured on a hard V drawn down to 400 Hz and straight back up, with smoothing
+at zero and the committed fit: drawn **-17.89 dB** at the apex, realised
+**-17.82 dB**. The corner survives. What was missing was any way to know that
+without finding a slider called SMOOTH and understanding what it did.
+
+**Fidelity is now three buttons** - `1:1`, `Soft`, `Smooth` - sitting directly
+under the shape menu and setting `smooth` to 0, 15 and 40 %. The numeric bar is
+still there for anything in between, and a button lights when the bar happens to
+match it. Presets that *set* a real parameter rather than shadowing it: no new
+state, nothing to keep in sync, and no way for the button and the value to
+disagree.
+
+**Eleven starting shapes** - flat, smiley, warm and bright tilt, de-mud,
+presence, air, rumble cut, tape roll-off, telephone, vocal. They are generated,
+not stored. A shape built from bells and shelves is one the Analog fitter can
+reproduce almost exactly, which a captured 1024-point snapshot would not be, and
+generating them means they resample to any future grid size for free. Loading
+one is a single undo entry and earns the committed-quality fit, because a shape
+is a finished curve.
+
+`TestCurveFitter` holds every shape to a measured bound - a thousandth of a dB
+for the band-derived ones, and under a third of a dB for the three built from
+slopes steeper than any shelf can go. The bounds are set just above what is
+measured rather than at a comfortable round number, because a threshold with an
+order of magnitude of slack never catches the regression it exists for.
+
+This also closes part of the "factory presets not authored" gap noted at the top
+of this file: the bank still ships empty, but the plugin no longer starts with
+nothing to reach for.

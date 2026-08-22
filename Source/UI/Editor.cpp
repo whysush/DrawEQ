@@ -14,6 +14,11 @@ namespace
 
     const Tool kTools[] { Tool::pencil, Tool::line, Tool::smooth, Tool::erase, Tool::node };
 
+    /** Label and the `smooth` percentage it stands for. 1:1 hands the stroke to
+        the DSP exactly as drawn, corners included. */
+    struct Fidelity { const char* label; float smoothPercent; };
+    const Fidelity kFidelity[] { { "1:1", 0.0f }, { "Soft", 15.0f }, { "Smooth", 40.0f } };
+
     /** A section rule: caption on the left, hairline across the rest. */
     void paintSectionHeader (juce::Graphics& g, juce::Rectangle<int> area,
                              const juce::String& caption, const juce::String& status,
@@ -95,6 +100,46 @@ GraphiteEditor::GraphiteEditor (GraphiteProcessor& p)
     analyserBox.addItemList ({ "Off", "Pre", "Post", "Both" }, 1);
     addAndMakeVisible (analyserBox);
 
+    shapeBox.setTextWhenNothingSelected ("Load shape");
+
+    for (int i = 0; i < int (shapes::Shape::count); ++i)
+        shapeBox.addItem (shapes::name (shapes::Shape (i)), i + 1);
+
+    shapeBox.onChange = [this]
+    {
+        const int picked = shapeBox.getSelectedId();
+
+        if (picked <= 0)
+            return;
+
+        processor.applyShape (shapes::Shape (picked - 1));
+
+        // Back to the prompt, so picking the same shape again re-applies it
+        // rather than doing nothing.
+        shapeBox.setSelectedId (0, juce::dontSendNotification);
+    };
+
+    addAndMakeVisible (shapeBox);
+
+    for (std::size_t i = 0; i < fidelityButtons.size(); ++i)
+    {
+        auto& b = fidelityButtons[i];
+        b.setButtonText (kFidelity[i].label);
+        b.setClickingTogglesState (false);
+        b.setWantsKeyboardFocus (true);
+        b.onClick = [this, target = kFidelity[i].smoothPercent]
+        {
+            if (auto* smoothParam = processor.apvts.getParameter (params::id::smooth))
+            {
+                smoothParam->beginChangeGesture();
+                smoothParam->setValueNotifyingHost (smoothParam->convertTo0to1 (target));
+                smoothParam->endChangeGesture();
+            }
+        };
+
+        addAndMakeVisible (b);
+    }
+
     analyserAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
         p.apvts, params::id::analyzer, analyserBox);
 
@@ -161,6 +206,12 @@ void GraphiteEditor::toggleAnalyser()
 void GraphiteEditor::timerCallback()
 {
     analyseButton.setToggleState (analyserChoice() != 0, juce::dontSendNotification);
+
+    const float smoothNow = processor.apvts.getRawParameterValue (params::id::smooth)->load();
+
+    for (std::size_t i = 0; i < fidelityButtons.size(); ++i)
+        fidelityButtons[i].setToggleState (std::abs (smoothNow - kFidelity[i].smoothPercent) < 0.5f,
+                                           juce::dontSendNotification);
 
     // Only the strips carrying live numbers; the canvas repaints itself.
     repaint (toolBarArea);
@@ -308,6 +359,21 @@ void GraphiteEditor::resized()
 
     // --- sidebar contents --------------------------------------------------
     shapeHeaderArea = sidebar.removeFromTop (kHeaderHeight);
+    sidebar.removeFromTop (Theme::Metrics::gap);
+
+    shapeBox.setBounds (sidebar.removeFromTop (26));
+    sidebar.removeFromTop (Theme::Metrics::gap / 2);
+
+    {
+        auto row = sidebar.removeFromTop (24);
+        const int cell = row.getWidth() / int (fidelityButtons.size());
+
+        for (auto& b : fidelityButtons)
+        {
+            b.setBounds (row.removeFromLeft (cell).reduced (1, 0));
+        }
+    }
+
     sidebar.removeFromTop (Theme::Metrics::gap);
 
     for (auto* b : { &morph, &tilt, &smooth, &shift, &bands, &mix })

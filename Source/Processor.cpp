@@ -197,6 +197,16 @@ void GraphiteProcessor::timerCallback()
     }
 }
 
+void GraphiteProcessor::applyShape (shapes::Shape shape)
+{
+    CurveArray c;
+    shapes::build (shape, sr > 0.0 ? sr : 48000.0, c);
+
+    // setCurve pushes its own undo entry, so this is a single Ctrl+Z away.
+    model.setCurve (c);
+    curveWorker.requestDeepFit();
+}
+
 void GraphiteProcessor::storeCurrentIntoSlot (int slot)
 {
     presets.store (slot - 1, model.getCurve(), pTilt->load(), pSmooth->load(), pShift->load());
