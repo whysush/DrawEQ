@@ -329,6 +329,10 @@ void GraphiteProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
 {
     const juce::ScopedNoDenormals noDenormals;
 
+    // Reading the clock is a vDSO call: no allocation, no lock, and cheap
+    // enough at block rate to be worth an honest load figure in the UI.
+    const auto startTicks = juce::Time::getHighResolutionTicks();
+
     const int numSamples = buffer.getNumSamples();
     const int nch = juce::jmin (buffer.getNumChannels(), kMaxChannels);
 
@@ -472,6 +476,19 @@ void GraphiteProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     }
 
     spectrum.pushPost (buffer.getArrayOfReadPointers(), nch, numSamples);
+
+    const double elapsed = juce::Time::highResolutionTicksToSeconds (
+        juce::Time::getHighResolutionTicks() - startTicks);
+    const double available = double (numSamples) / sr;
+
+    if (available > 0.0)
+    {
+        // Exponential average: the instantaneous figure jitters far too much
+        // to read, and the number is only useful as a trend.
+        const float instant = float (elapsed / available);
+        const float previous = audioLoad.load (std::memory_order_relaxed);
+        audioLoad.store (previous + 0.05f * (instant - previous), std::memory_order_relaxed);
+    }
 }
 
 // ---------------------------------------------------------------------------

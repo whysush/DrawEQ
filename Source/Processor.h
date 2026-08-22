@@ -60,6 +60,13 @@ public:
     Analyzer&    analyzer() noexcept { return spectrum; }
     PresetBank&  bank()     noexcept { return presets; }
 
+    /** Audio callback cost as a percentage of the time available to it.
+        Measured, exponentially smoothed, and read by the status console. */
+    float audioLoadPercent() const noexcept
+    {
+        return audioLoad.load (std::memory_order_relaxed) * 100.0f;
+    }
+
     juce::AudioProcessorValueTreeState apvts;
 
     /** Slot handling. The canvas always edits the slot named by `morphA`, so
@@ -112,6 +119,7 @@ private:
     // still undefined behaviour that a sanitiser will rightly complain about.
     std::atomic<int>  reportedLatency { 0 };
     std::atomic<bool> prepared { false };
+    std::atomic<float> audioLoad { 0.0f };
 
     // Cached parameter pointers: reading these is a relaxed atomic load, which
     // is the only kind of parameter access allowed on the audio thread.

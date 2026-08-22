@@ -54,7 +54,11 @@ void CurveCanvas::timerCallback()
 CanvasContext CurveCanvas::makeContext() const
 {
     CanvasContext ctx;
-    ctx.plot       = getLocalBounds().toFloat().reduced (float (Theme::Metrics::canvasInset));
+
+    auto area = getLocalBounds().toFloat().reduced (float (Theme::Metrics::canvasInset));
+    ctx.axis = area.removeFromBottom (float (Theme::Metrics::freqAxisHeight));
+    area.removeFromBottom (float (Theme::Metrics::gap));
+    ctx.plot = area;
     ctx.ui         = &ui;
     ctx.analyzer   = &processor.analyzer();
     ctx.mode       = ui.mode;
@@ -85,6 +89,9 @@ void CurveCanvas::paint (juce::Graphics& g)
     CursorLayer::paint (g, ctx, mousePos, mouseInside, brushOctaves,
                         current != Tool::node && current != Tool::line);
     CursorLayer::paintErrorReadout (g, ctx);
+
+    g.setColour (Theme::Colour::of (Theme::Colour::hairline));
+    g.drawRect (ctx.plot, 1.0f);
 
     if (hasKeyboardFocus (false))
     {

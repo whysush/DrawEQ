@@ -23,8 +23,12 @@ void SlotStrip::timerCallback()
 
 juce::Rectangle<float> SlotStrip::boundsForSlot (int index) const
 {
-    const float w = float (getWidth()) / float (PresetBank::kSlots);
-    return juce::Rectangle<float> (float (index) * w, 0.0f, w, float (getHeight())).reduced (2.0f);
+    // The leading cell is the "SLOT" caption, so the eight buttons divide what
+    // is left rather than the whole width.
+    const float labelWidth = 108.0f;
+    const float w = (float (getWidth()) - labelWidth) / float (PresetBank::kSlots);
+    return juce::Rectangle<float> (labelWidth + float (index) * w, 0.0f, w, float (getHeight()))
+               .reduced (3.0f, 2.0f);
 }
 
 int SlotStrip::slotAt (juce::Point<float> p) const
@@ -42,6 +46,10 @@ void SlotStrip::paint (juce::Graphics& g)
     const int slotA = int (state.getRawParameterValue (params::id::morphA)->load());
     const int slotB = int (state.getRawParameterValue (params::id::morphB)->load());
 
+    Theme::drawTrackedLabel (g, "Slot", getLocalBounds().withWidth (108).reduced (14, 0),
+                             Theme::Colour::of (Theme::Colour::textMid),
+                             juce::Justification::centredLeft);
+
     for (int i = 0; i < PresetBank::kSlots; ++i)
     {
         const auto area = boundsForSlot (i);
@@ -49,30 +57,33 @@ void SlotStrip::paint (juce::Graphics& g)
         const bool isB = (i + 1) == slotB;
         const bool used = processor.bank().isUsed (i);
 
-        g.setColour (Theme::Colour::of (isA ? Theme::Colour::raised : Theme::Colour::panel));
-        g.fillRoundedRectangle (area, 3.0f);
-
-        // A is the slot you are drawing into, B is where morph is heading.
-        // Different colours because they are different kinds of thing.
-        g.setColour (isA ? Theme::Colour::of (Theme::Colour::plot)
-                   : isB ? Theme::Colour::of (Theme::Colour::focus)
-                         : Theme::Colour::of (Theme::Colour::hairline));
-        g.drawRoundedRectangle (area, 3.0f, isA || isB ? 1.5f : 1.0f);
-
-        g.setFont (Theme::monoFont (Theme::Metrics::smallSize));
-        g.setColour (Theme::Colour::of (used || isA ? Theme::Colour::textHi : Theme::Colour::textLo));
-        g.drawText (juce::String (i + 1), area, juce::Justification::centred);
+        g.setColour (Theme::Colour::of (isA ? Theme::Colour::raised : Theme::Colour::recessed));
+        g.fillRect (area);
 
         if (i == hovered)
         {
-            g.setColour (Theme::Colour::of (Theme::Colour::focus).withAlpha (0.15f));
-            g.fillRoundedRectangle (area, 3.0f);
+            g.setColour (Theme::Colour::of (Theme::Colour::accent).withAlpha (0.08f));
+            g.fillRect (area);
         }
+
+        // A is the slot you draw into; B is where morph is heading. A gets the
+        // phosphor, B gets an outline of it - same hue, different weight, so
+        // the pair reads as one relationship rather than two unrelated states.
+        g.setColour (isA ? Theme::Colour::of (Theme::Colour::accent)
+                   : isB ? Theme::Colour::of (Theme::Colour::accentDim).withAlpha (0.75f)
+                         : Theme::Colour::of (Theme::Colour::hairline));
+        g.drawRect (area, isA ? 1.6f : 1.0f);
+
+        g.setFont (Theme::monoFont (Theme::Metrics::bodySize));
+        g.setColour (Theme::Colour::of (isA ? Theme::Colour::accent
+                                  : used || isB ? Theme::Colour::textHi
+                                                : Theme::Colour::textLo));
+        g.drawText (juce::String (i + 1), area.toNearestInt(), juce::Justification::centred);
 
         if (i == focused && hasKeyboardFocus (false))
         {
             g.setColour (Theme::Colour::of (Theme::Colour::focus));
-            g.drawRoundedRectangle (area.expanded (1.0f), 3.0f, Theme::Metrics::focusRing);
+            g.drawRect (area.expanded (1.0f), Theme::Metrics::focusRing);
         }
     }
 }

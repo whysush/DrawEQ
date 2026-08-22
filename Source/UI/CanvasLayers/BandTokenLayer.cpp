@@ -57,7 +57,7 @@ void BandTokenLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
         const float radius = Theme::Metrics::tokenRadius * (hot ? 1.15f : 1.0f);
         const auto circle = juce::Rectangle<float> (radius * 2.0f, radius * 2.0f).withCentre (centre);
 
-        const float alpha = idle ? 0.25f : 1.0f;
+        const float alpha = idle ? 0.45f : 1.0f;
 
         g.setColour (colour.withAlpha (0.25f * alpha));
         g.fillEllipse (circle);

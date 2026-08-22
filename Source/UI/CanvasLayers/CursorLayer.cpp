@@ -64,22 +64,17 @@ void CursorLayer::paintErrorReadout (juce::Graphics& g, const CanvasContext& ctx
     if (ctx.ui == nullptr || ! ctx.ui->valid)
         return;
 
-    const float err = ctx.ui->maxErrorDb;
-    const bool over = err > 3.0f;
-
-    // Small, permanent, honest. The fitter's limits are a fact about the
-    // instrument, not something to hide until it goes wrong (CONTEXT.md 7.5).
-    const juce::String text = "MAX ERR " + juce::String (err, err < 10.0f ? 2 : 1) + " dB";
+    // The number itself lives in the tool bar. What belongs on the canvas is
+    // the offer, and only when it applies: quiet, non-modal, and pointing at
+    // the mode that would fit this exactly (CONTEXT.md 7.5).
+    if (ctx.ui->maxErrorDb <= 3.0f || ctx.mode != Mode::analog)
+        return;
 
     g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
-    g.setColour (Theme::Colour::of (over ? Theme::Colour::warn : Theme::Colour::textLo));
-    g.drawText (text, int (ctx.plot.getX()) + 6, int (ctx.plot.getBottom()) - 30, 200, 14,
+    g.setColour (Theme::Colour::of (Theme::Colour::warn));
+    g.drawText ("SPECTRAL MODE WILL FIT THIS EXACTLY",
+                int (ctx.plot.getX()) + 8, int (ctx.plot.getBottom()) - 22, 340, 14,
                 juce::Justification::centredLeft);
-
-    if (over && ctx.mode == Mode::analog)
-        g.drawText ("SPECTRAL MODE WILL FIT THIS EXACTLY",
-                    int (ctx.plot.getX()) + 6, int (ctx.plot.getBottom()) - 44, 320, 14,
-                    juce::Justification::centredLeft);
 }
 
 } // namespace graphite

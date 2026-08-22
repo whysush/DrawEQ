@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Knob.h"
+#include "LookAndFeel.h"
 
 namespace graphite
 {

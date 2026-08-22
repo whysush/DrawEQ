@@ -196,3 +196,70 @@ have **not** been measured: that needs a host and a profiler, and this machine
 has neither FL Studio nor a calibrated reference. What has been verified is the
 harder invariant behind them - `TestRealtimeSafety` proves the audio path never
 allocates, under a global allocation trap, in both modes and mid-crossfade.
+
+---
+
+## The interface was redesigned (supersedes CONTEXT.md 9.1-9.3)
+
+CONTEXT.md describes a drafting surface: graphite-grey ghost, warm amber plotter
+line, indigo-to-gold band ramp, Space Grotesk labels with JetBrains Mono
+numbers. That is no longer what is built. On a supplied visual reference the
+interface became a **phosphor terminal**, and the sections above are the record
+of what changed rather than a description of the shipping design.
+
+**What changed**
+
+- **One hue.** Every active state is the same green at some brightness, so the
+  panel is quiet until something is happening. `Theme::Colour` keeps its
+  structure; only the values moved.
+- **Layout.** Slots moved to a full-width row across the top; parameters moved
+  into a right-hand sidebar; the tools and the fit-error readout became a bottom
+  bar. Default size went from 1000x560 to 1180x620 to give the sidebar room.
+- **Knobs became character bars.** `[========|.......]` in the monospaced face
+  instead of rotary dials. The cells quantise the value visually, so two
+  parameters at the same setting line up exactly and the column reads like a
+  column of numbers. `Knob` is deleted; `BarSlider` replaces it.
+- **Monospace throughout.** CONTEXT.md 9.3 says labels are Grotesk and values
+  are Mono, never mixed. A terminal sets everything in one width, so the
+  grotesk is now used for the wordmark alone.
+- **A status console.** Three lines under the sidebar: fit quality and band
+  count, latency and audio load, mode and sample rate.
+
+**What survived, because it is the actual thesis**
+
+The ghost, the plot line and the residual ribbon are unchanged in behaviour -
+the ribbon still vanishes when the fit is exact and still blooms at the exact
+frequency where it is not. `MAX ERR` is still permanent and still turns amber
+above 3 dB, and amber is the one deliberate departure from the single hue
+precisely because it has to be unmissable against this much green.
+
+Band tokens still encode frequency, but a single-hue interface cannot ramp
+indigo to gold, so **frequency is carried by brightness instead**: dim and
+desaturated at 20 Hz, full phosphor at 20 kHz. The property that mattered - a
+glance tells you where a band sits - is intact.
+
+**Two figures in the console are newly measured.** The load percentage is the
+audio callback timing itself with a vDSO clock read per block, exponentially
+smoothed; the latency is what the host was actually told. Neither is decorative,
+because a panel reporting a plausible constant would be worse than no panel.
+
+**Not adopted from the reference.** It shows an `OVERSAMPLE` checkbox and labels
+the analyser selector `CHANNEL`. Oversampling is not implemented, and a control
+that does nothing is worse than an absent one. `CHANNEL` would imply mid-side or
+channel selection, which CONTEXT.md 1 lists as an explicit non-goal, so that
+selector is labelled for what it actually does.
+
+## Tool icons are vector paths, not font glyphs
+
+CONTEXT.md 9.5 sketches the tool row as characters. Setting a button's text to a
+pencil or erase glyph depends on whichever fallback face the machine has, so two
+users would see different icons and one would see tofu. `ToolIcons.h` draws all
+five as paths in a unit box: they take the theme colour, stay crisp at any UI
+scale, and are identical everywhere.
+
+The pencil and the eraser were drawn with the failure mode of small icons in
+mind - a bare quadrilateral reads as a pencil *or* an eraser and the viewer
+cannot tell which. The pencil gets a collar and a filled graphite tip; the
+eraser gets a blunt end, a two-tone sleeve, and a fragment of the line it is
+clearing. The node tool draws its handle as a **ring**, the same shape as a band
+token on the canvas, so the icon and the thing it manipulates match.

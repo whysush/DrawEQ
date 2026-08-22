@@ -19,6 +19,7 @@ namespace graphite
 struct CanvasContext
 {
     juce::Rectangle<float> plot;
+    juce::Rectangle<float> axis;   // frequency labels, in their own strip below
 
     float minDb = Theme::Metrics::minDb;
     float maxDb = Theme::Metrics::maxDb;

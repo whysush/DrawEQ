@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Knob.h"
+#include "LookAndFeel.h"
 
 namespace graphite
 {
@@ -8,7 +8,7 @@ namespace graphite
 class GraphiteProcessor;
 
 /**
-    The eight preset slots.
+    The eight preset slots, across the top of the window.
 
     Click selects the slot the canvas edits (which is slot A of the morph, so
     "what you drew" and "the morph source" are the same thing and morph is

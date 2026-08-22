@@ -39,7 +39,9 @@ void loadFonts()
    #endif
 }
 
-juce::Font labelFont (float height) { return makeFont (grotesk, height, false); }
+// Labels are monospaced too in this scheme; the wordmark is the only thing
+// set in the grotesk.
+juce::Font labelFont (float height) { return makeFont (mono, height, true); }
 juce::Font monoFont  (float height) { return makeFont (mono, height, true); }
 juce::Font titleFont()              { return makeFont (grotesk, Metrics::titleSize, false); }
 
@@ -84,16 +86,16 @@ void drawTrackedLabel (juce::Graphics& g, const juce::String& text, juce::Rectan
 
 juce::Colour bandColour (float frequencyHz)
 {
-    // Stops along one perceptual path, placed on the same log axis the canvas
+    // Stops along one brightness path, placed on the same log axis the canvas
     // uses, so a token's colour and its position agree.
     struct Stop { float norm; juce::uint32 argb; };
 
     static constexpr Stop stops[] {
-        { 0.00f, 0xFF4C5B96 },   // deep indigo, 20 Hz
-        { 0.28f, 0xFF56707F },   // slate
-        { 0.55f, 0xFF6E8A6B },   // sage
-        { 0.78f, 0xFFB8A868 },   // straw
-        { 1.00f, 0xFFE8C46A }    // pale gold, 20 kHz
+        { 0.00f, 0xFF4E5F56 },   // dim slate-green, 20 Hz
+        { 0.30f, 0xFF5E7C68 },
+        { 0.58f, 0xFF6FA37D },
+        { 0.80f, 0xFF57C489 },
+        { 1.00f, 0xFF3FE08A }    // full phosphor, 20 kHz
     };
 
     const float t = juce::jlimit (0.0f, 1.0f, LogGrid::hzToNorm (frequencyHz));
