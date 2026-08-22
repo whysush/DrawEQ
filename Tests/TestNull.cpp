@@ -164,3 +164,101 @@ TEST_CASE ("the worker survives its pool running dry", "[worker]")
     REQUIRE (worker.publishCount() > 0);
     REQUIRE (worker.ring().consume() != nullptr);
 }
+
+TEST_CASE ("a stroke in progress does not disturb the filter", "[worker][commit]")
+{
+    CurveModel model;
+    CurveWorker worker;
+    worker.setSource (&model);
+    worker.prepare (kSr, kBlock);
+    worker.setMacros (0.0f, 0.0f, 0.0f, 12, Mode::analog);
+    worker.setLiveFit (false);
+
+    worker.buildOnceForTesting();
+    const auto settled = worker.publishCount();
+    REQUIRE (settled > 0);
+
+    // Mouse down, then a long drag. None of it should reach the DSP: the user
+    // is still in the middle of saying what they want.
+    model.beginGesture();
+    model.startStroke (100.0f, 0.0f);
+
+    for (int i = 0; i < 20; ++i)
+    {
+        model.strokeTo (100.0f * std::pow (2.0f, float (i) * 0.25f), -0.6f * float (i),
+                        0.4f, 1.0f, CurveModel::Brush::draw);
+        worker.buildOnceForTesting();
+    }
+
+    REQUIRE (worker.publishCount() == settled);
+    REQUIRE (worker.commitPending());
+
+    // Mouse up commits, once.
+    model.endGesture();
+    worker.buildOnceForTesting();
+
+    REQUIRE (worker.publishCount() == settled + 1);
+    REQUIRE_FALSE (worker.commitPending());
+
+    worker.buildOnceForTesting();
+    REQUIRE (worker.publishCount() == settled + 1);   // and does not keep going
+}
+
+TEST_CASE ("live fit still tracks a drag when asked to", "[worker][commit]")
+{
+    CurveModel model;
+    CurveWorker worker;
+    worker.setSource (&model);
+    worker.prepare (kSr, kBlock);
+    worker.setMacros (0.0f, 0.0f, 0.0f, 12, Mode::analog);
+    worker.setLiveFit (true);
+
+    worker.buildOnceForTesting();
+    const auto settled = worker.publishCount();
+
+    model.beginGesture();
+    model.startStroke (500.0f, 0.0f);
+
+    for (int i = 0; i < 5; ++i)
+    {
+        model.strokeTo (500.0f, -2.0f * float (i), 0.4f, 1.0f, CurveModel::Brush::draw);
+        worker.buildOnceForTesting();
+
+        if (auto* s = worker.ring().consume())
+        {
+            worker.ring().retire (s);
+            worker.ring().drainRecycle();
+        }
+    }
+
+    model.endGesture();
+
+    REQUIRE (worker.publishCount() > settled);
+    REQUIRE_FALSE (worker.commitPending());
+}
+
+TEST_CASE ("the committed fit is better than the live one", "[commit][fitter]")
+{
+    // This is the trade the deferred model buys: not fitting thirty times a
+    // second leaves room for a search that actually finds the right basin.
+    CurveArray target {};
+
+    for (int i = 0; i < LogGrid::kSize; ++i)
+    {
+        const float hz = LogGrid::indexToHz (float (i));
+        target[std::size_t (i)] = hz > 300.0f && hz < 1500.0f ? -12.0f : 0.0f;
+    }
+
+    CurveFitter live, committed;
+    live.prepare (kSr);
+    committed.prepare (kSr);
+    live.setBellCount (12);
+    committed.setBellCount (12);
+
+    const float liveErr = live.fit (target, CurveFitter::Effort::cold).maxErrorDb;
+    const float deepErr = committed.fit (target, CurveFitter::Effort::deep).maxErrorDb;
+
+    INFO ("cold " << liveErr << " dB, deep " << deepErr << " dB");
+    REQUIRE (deepErr <= liveErr);
+    REQUIRE (deepErr < liveErr * 0.75f);   // and meaningfully so, not by a rounding error
+}

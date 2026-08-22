@@ -300,3 +300,60 @@ The residual is interpolation into the feather skirt at the two ends, not lag.
 A visible consequence: fit errors went *up* slightly on the same gesture,
 because the fitter is now being asked to match what was actually drawn instead
 of a flattened version of it. That is the correct direction.
+
+---
+
+## Drawing is committed, not tracked (supersedes CONTEXT.md 5's cadence)
+
+CONTEXT.md 5 has the worker re-fitting continuously while the user drags, at up
+to thirty states a second, dropping intermediate strokes. That is now the
+optional behaviour rather than the default.
+
+By default the filter is **left alone until the stroke ends**, and is then built
+once with a much larger search. The reason is not to save CPU - it is accuracy.
+A fit that has to finish inside a frame gets five Levenberg-Marquardt iterations
+from the previous solution. A fit that runs once per stroke can afford several
+seeds, a hundred and fifty iterations each, and perturbed restarts. LM only ever
+walks downhill, so on a curve with more structure than bands it settles into
+whichever basin the seed landed in; shaking the best solution and re-converging
+is what finds the better one, and it is only affordable once per gesture.
+
+What that buys, at 12 bands:
+
+| target | live fit | committed |
+|---|---|---|
+| wide scoop | 4.031 dB | **0.934 dB** |
+| brick-wall scoop | 0.548 dB | **0.255 dB** |
+| the demo stroke | 0.49 dB | **0.05 dB** |
+| narrow notch | 9.387 dB | 8.828 dB (still unfittable, correctly) |
+
+Cost is 25-80 ms on the worker thread, once, while the audio thread keeps
+running the previous filter. Nothing is dropped and nothing clicks.
+
+**What the UI had to do differently.** The ghost is now computed on the message
+thread every frame straight from the model, through the same macro chain the
+worker uses, because the worker's snapshot no longer updates during a stroke and
+the user would otherwise be drawing blind. While a commit is outstanding the
+ghost brightens and thickens, the residual ribbon shows the gap between what has
+been drawn and what is still playing, and the console says `> drawing - release
+to fit`. When the stroke lands, the ribbon collapses.
+
+**Commits are counted, not observed.** The worker watches a monotonic count of
+finished gestures rather than only the in-progress flag. A flick that begins and
+ends between two worker ticks would never be seen open, and would quietly get a
+cheap fit instead of the committed one - which is exactly the case that made the
+demo render sit at 0.49 dB until it was fixed.
+
+**The same curve always realises the same way.** Undo, redo, a preset recall and
+a hand-edited band all route to the committed-quality fit too, so a curve does
+not depend on how the user arrived at it.
+
+**On "1:1".** Spectral mode genuinely is: the drawn curve becomes the filter
+directly, and the null test holds it to -132 dB. Analog cannot be, for any
+finite band count - that is CONTEXT.md 7.5 and it is why Spectral ships
+alongside. What the committed fit does is get close enough that the distinction
+stops mattering for musical curves, and `MAX ERR` still says so honestly when it
+does not.
+
+`liveFit` restores continuous re-fitting for anyone who wants the curve to
+follow their hand.

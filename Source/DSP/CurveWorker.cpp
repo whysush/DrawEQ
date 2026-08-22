@@ -111,12 +111,11 @@ void CurveWorker::run()
     }
 }
 
-void CurveWorker::buildIfNeeded()
+void CurveWorker::fillCurrentSnapshot (CurveSnapshot& snap) const
 {
-    if (! prepared || source == nullptr)
+    if (source == nullptr)
         return;
 
-    CurveSnapshot snap;
     source->fillSnapshot (snap);
 
     snap.tiltDbPerDecade    = tilt.load (std::memory_order_relaxed);
@@ -127,11 +126,44 @@ void CurveWorker::buildIfNeeded()
     snap.mode               = Mode (modeIndex.load (std::memory_order_relaxed));
     snap.sampleRate         = sampleRate;
 
+    const std::lock_guard<std::mutex> g (morphLock);
+    snap.morphTarget = snap.morphAmount > 1.0e-4f ? morphTarget : CurveArray {};
+}
+
+void CurveWorker::buildIfNeeded()
+{
+    if (! prepared || source == nullptr)
+        return;
+
+    // A stroke in progress leaves the filter alone. The curve is not finished
+    // yet, so fitting it would be fitting something the user is still in the
+    // middle of saying - and the fit that runs on release is a much better one
+    // than anything affordable while they drag.
+    const bool gestureOpen = source->isGestureOpen();
+
+    if (gestureOpen && ! liveFit.load (std::memory_order_relaxed))
+    {
+        awaitingCommit.store (true, std::memory_order_release);
+        return;
+    }
+
+    awaitingCommit.store (false, std::memory_order_release);
+
+    // A finished gesture is a commit, whether or not this thread ever saw it
+    // open. Counting completions rather than watching the flag is what makes a
+    // flick shorter than one tick behave the same as a slow stroke.
+    const std::uint64_t completions = source->gestureCount();
+
+    const bool commit = completions != lastGestureCount
+                      || deepRequested.exchange (false, std::memory_order_acq_rel);
+
+    CurveSnapshot snap;
+    fillCurrentSnapshot (snap);
+
     std::uint64_t currentMorphVersion = 0;
 
     {
         const std::lock_guard<std::mutex> g (morphLock);
-        snap.morphTarget   = morphTarget;
         currentMorphVersion = morphVersion;
     }
 
@@ -145,6 +177,7 @@ void CurveWorker::buildIfNeeded()
     auto moved = [] (float a, float b) { return std::abs (a - b) > 1.0e-7f; };
 
     const bool changed = cold
+                      || commit
                       || snap.version != lastVersion
                       || moved (snap.tiltDbPerDecade, lastTilt)
                       || moved (snap.smoothOctaves, lastSmooth)
@@ -162,7 +195,9 @@ void CurveWorker::buildIfNeeded()
         // All four entries are in flight, which means the audio thread has not
         // caught up. Drop this frame and try again on the next tick - the curve
         // will only be more current by then.
+        // Leave lastGestureCount alone so the commit is retried next tick.
         coldRequested.store (cold, std::memory_order_release);
+        deepRequested.store (commit, std::memory_order_release);
         return;
     }
 
@@ -172,7 +207,9 @@ void CurveWorker::buildIfNeeded()
     state->sourceVersion = snap.version;
 
     if (snap.mode == Mode::analog)
-        buildAnalog (*state, target, cold);
+        buildAnalog (*state, target, commit ? CurveFitter::Effort::deep
+                                  : cold    ? CurveFitter::Effort::cold
+                                            : CurveFitter::Effort::warm);
     else
         buildSpectral (*state, target, snap.mode == Mode::spectralMinimum);
 
@@ -199,6 +236,7 @@ void CurveWorker::buildIfNeeded()
     lastShift     = snap.freqShiftSemitones;
     lastMorph     = snap.morphAmount;
     lastMorphVersion = currentMorphVersion;
+    lastGestureCount = completions;
     lastBandCount = snap.bandCount;
     lastMode      = int (snap.mode);
 }
@@ -230,11 +268,11 @@ void CurveWorker::buildSpectral (FilterState& state, const CurveArray& t, bool m
     ui.rmsErrorDb = std::sqrt (sumSq / float (LogGrid::kSize));
 }
 
-void CurveWorker::buildAnalog (FilterState& state, const CurveArray& t, bool cold)
+void CurveWorker::buildAnalog (FilterState& state, const CurveArray& t, CurveFitter::Effort effort)
 {
     fitter.setBellCount (bandCount.load (std::memory_order_relaxed));
 
-    const auto& r = fitter.fit (t, cold);
+    const auto& r = fitter.fit (t, effort);
 
     state.bands    = r.bands;
     state.numBands = r.numBands;

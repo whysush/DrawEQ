@@ -63,6 +63,24 @@ public:
     void setMacros (float tiltDbPerDecade, float smoothPercent, float freqShiftSemitones,
                     int bandCount, Mode mode) noexcept;
 
+    /** When false (the default), the filter is left alone while a stroke is in
+        progress and rebuilt once, deeply, when the stroke ends. When true, it
+        re-fits continuously as the user drags. */
+    void setLiveFit (bool shouldFitLive) noexcept
+    {
+        liveFit.store (shouldFitLive, std::memory_order_relaxed);
+    }
+
+    /** True while a stroke is in progress whose result has not been built yet -
+        the UI uses this to say the curve is drawn but not yet realised. */
+    bool commitPending() const noexcept { return awaitingCommit.load (std::memory_order_acquire); }
+
+    /** Assembles the snapshot the worker would build from right now: the raw
+        curve plus every macro. The canvas uses it to draw the stroke as it is
+        being made, which must go through exactly the same chain the DSP will
+        use or the ghost would be a different curve from the target. */
+    void fillCurrentSnapshot (CurveSnapshot&) const;
+
     /** The far end of the morph. Set on the message thread whenever the target
         slot changes; the amount itself is automatable and moves independently. */
     void setMorphTarget (const CurveArray& target);
@@ -75,6 +93,16 @@ public:
         count change - anything where the previous solution is not a hint but a
         distraction. */
     void requestColdFit() noexcept { coldRequested.store (true, std::memory_order_release); }
+
+    /** Like requestColdFit, but asks for the full committed-quality search.
+        Used by the discrete actions that land on a finished curve - undo, redo,
+        a preset recall, a hand-edited band - so that the same curve always
+        realises the same way regardless of how the user got to it. */
+    void requestDeepFit() noexcept
+    {
+        deepRequested.store (true, std::memory_order_release);
+        coldRequested.store (true, std::memory_order_release);
+    }
 
     StateRing<FilterState>& ring() noexcept { return states; }
 
@@ -96,7 +124,7 @@ private:
     void run();
     void buildIfNeeded();
     void buildSpectral (FilterState& state, const CurveArray& target, bool minimumPhase);
-    void buildAnalog (FilterState& state, const CurveArray& target, bool cold);
+    void buildAnalog (FilterState& state, const CurveArray& target, CurveFitter::Effort);
 
     CurveModel* source = nullptr;
 
@@ -121,6 +149,10 @@ private:
     std::atomic<int>   bandCount { 12 };
     std::atomic<int>   modeIndex { int (Mode::analog) };
     std::atomic<bool>  coldRequested { true };
+    std::atomic<bool>  liveFit { false };
+    std::atomic<bool>  deepRequested { false };
+    std::atomic<bool>  awaitingCommit { false };
+    std::uint64_t lastGestureCount = 0;   // worker thread only
     std::atomic<int>   latency { 0 };
     std::atomic<std::uint64_t> published { 0 };
 

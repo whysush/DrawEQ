@@ -41,7 +41,11 @@ void CurveLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     juce::Graphics::ScopedSaveState save (g);
     g.reduceClipRegion (ctx.plot.toNearestInt());
 
-    const auto ghost    = curvePath (ctx.ui->targetDb, ctx);
+    // The ghost is what the user has drawn, which during a stroke is ahead of
+    // anything the worker has seen.
+    const auto& targetCurve = ctx.liveTarget != nullptr ? *ctx.liveTarget : ctx.ui->targetDb;
+
+    const auto ghost    = curvePath (targetCurve, ctx);
     const auto achieved = curvePath (ctx.ui->achievedDb, ctx);
 
     // --- residual ribbon --------------------------------------------------
@@ -72,7 +76,7 @@ void CurveLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
                 return a[std::size_t (i0)] + t * (a[std::size_t (i1)] - a[std::size_t (i0)]);
             };
 
-            upper.push_back ({ x, ctx.yForDb (sample (ctx.ui->targetDb)) });
+            upper.push_back ({ x, ctx.yForDb (sample (targetCurve)) });
             lower.push_back ({ x, ctx.yForDb (sample (ctx.ui->achievedDb)) });
         }
 
@@ -91,8 +95,13 @@ void CurveLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     }
 
     // --- ghost stroke: what you drew --------------------------------------
-    g.setColour (Theme::Colour::of (Theme::Colour::ghost).withAlpha (0.7f));
-    g.strokePath (ghost, juce::PathStrokeType (1.5f));
+    //
+    // Brighter while a commit is outstanding, because in that moment the ghost
+    // is the only line telling the truth: the plot below it is still the old
+    // filter, and the ribbon between them is the work not yet done.
+    g.setColour (Theme::Colour::of (Theme::Colour::ghost)
+                     .withAlpha (ctx.commitPending ? 1.0f : 0.7f));
+    g.strokePath (ghost, juce::PathStrokeType (ctx.commitPending ? 2.0f : 1.5f));
 
     // --- plot: what you got -----------------------------------------------
     const auto plotColour = Theme::Colour::of (Theme::Colour::plot);

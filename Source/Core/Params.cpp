@@ -77,6 +77,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (std::make_unique<AudioParameterBool> (
         ParameterID { id::phaseInvert, kVersion }, "Invert", false));
 
+    // Off by default: the curve is committed when the stroke ends, and the fit
+    // that runs then is a far better one than anything affordable at 30 Hz.
+    // Turning this on restores continuous re-fitting while dragging.
+    layout.add (std::make_unique<AudioParameterBool> (
+        ParameterID { id::liveFit, kVersion }, "Live", false));
+
     return layout;
 }
 

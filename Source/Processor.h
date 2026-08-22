@@ -136,6 +136,7 @@ private:
     std::atomic<float>* pBands = nullptr;
     std::atomic<float>* pAnalyzer = nullptr;
     std::atomic<float>* pInvert = nullptr;
+    std::atomic<float>* pLive = nullptr;
 
     int lastMorphA = 1, lastMorphB = 2;
 

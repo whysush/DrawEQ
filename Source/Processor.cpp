@@ -48,6 +48,7 @@ GraphiteProcessor::GraphiteProcessor()
     pBands    = apvts.getRawParameterValue (params::id::bandCount);
     pAnalyzer = apvts.getRawParameterValue (params::id::analyzer);
     pInvert   = apvts.getRawParameterValue (params::id::phaseInvert);
+    pLive     = apvts.getRawParameterValue (params::id::liveFit);
 
     curveWorker.setSource (&model);
 }
@@ -154,6 +155,7 @@ void GraphiteProcessor::pushMacrosToWorker()
     curveWorker.setMacros (pTilt->load(), pSmooth->load(), pShift->load(),
                            int (pBands->load()), Mode (int (pMode->load())));
     curveWorker.setMorphAmount (pMorph->load() * 0.01f);
+    curveWorker.setLiveFit (pLive->load() > 0.5f);
 }
 
 void GraphiteProcessor::timerCallback()
@@ -214,8 +216,9 @@ void GraphiteProcessor::recallSlot (int slot)
         model.reset();
 
     // A recalled curve has nothing to do with the previous solution, so the
-    // warm start would be a hindrance rather than a hint.
-    curveWorker.requestColdFit();
+    // warm start would be a hindrance rather than a hint - and a preset is a
+    // finished curve, so it earns the same fit a committed stroke gets.
+    curveWorker.requestDeepFit();
 }
 
 void GraphiteProcessor::clearSlot (int slot)

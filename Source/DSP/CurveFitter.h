@@ -42,6 +42,14 @@ public:
         int   iterations = 0;
     };
 
+    /** How hard to work. `warm` is a handful of iterations from the previous
+        solution, for live dragging. `cold` re-seeds and converges, for a preset
+        load. `deep` is what runs when a stroke is committed: several seeds, a
+        much larger iteration budget, and perturbed restarts from the best
+        result so far. It costs a hundred milliseconds or so and it is the whole
+        reason for not fitting continuously. */
+    enum class Effort { warm, cold, deep };
+
     /** Points the error is evaluated at. 256 on the log grid is dense enough
         that nothing hides between samples and small enough that a warm-start
         solve is a rounding error in the frame budget. */
@@ -56,9 +64,14 @@ public:
     /** Forget the previous solution; the next fit will be cold. */
     void reset();
 
-    /** Runs a fit against `target` (dB on the log grid) and returns the result.
-        `cold` forces a full re-seed even if a warm start is available. */
-    const Result& fit (const CurveArray& target, bool cold);
+    /** Runs a fit against `target` (dB on the log grid) and returns the result. */
+    const Result& fit (const CurveArray& target, Effort);
+
+    /** Convenience: `cold` selects a full re-seed, otherwise a warm start. */
+    const Result& fit (const CurveArray& target, bool cold)
+    {
+        return fit (target, cold ? Effort::cold : Effort::warm);
+    }
 
     const Result& lastResult() const noexcept { return result; }
 
@@ -66,6 +79,7 @@ private:
     void   buildTargets (const CurveArray& target);
     void   seedCold();
     void   seedSpread();
+    void   perturbFromBest (unsigned int variant);
     double runLM (int maxIterations);
     void   evaluateModel (std::vector<double>& out) const;
     double residualNorm (std::vector<double>& scratch);

@@ -35,7 +35,12 @@ void Console::paint (juce::Graphics& g)
 
     juce::StringArray lines;
 
-    if (! ui.valid)
+    if (processor.worker().commitPending())
+    {
+        lines.add ("> drawing " + juce::String::fromUTF8 ("\xe2\x80\x94")
+                   + " release to fit");
+    }
+    else if (! ui.valid)
     {
         lines.add ("> waiting for first fit");
     }
@@ -70,10 +75,12 @@ void Console::paint (juce::Graphics& g)
 
     for (int i = 0; i < lines.size(); ++i)
     {
-        const bool warn = poor && i == 0 && ui.valid && ui.mode == Mode::analog;
-        g.setColour (Theme::Colour::of (warn ? Theme::Colour::warn
-                                             : i == 0 ? Theme::Colour::textMid
-                                                      : Theme::Colour::textLo));
+        const bool pending = processor.worker().commitPending() && i == 0;
+        const bool warn = ! pending && poor && i == 0 && ui.valid && ui.mode == Mode::analog;
+        g.setColour (Theme::Colour::of (pending ? Theme::Colour::accent
+                                       : warn    ? Theme::Colour::warn
+                                       : i == 0  ? Theme::Colour::textMid
+                                                 : Theme::Colour::textLo));
         g.drawText (lines[i], area.removeFromTop (lineHeight), juce::Justification::centredLeft);
     }
 }

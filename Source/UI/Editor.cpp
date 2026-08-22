@@ -47,7 +47,8 @@ GraphiteEditor::GraphiteEditor (GraphiteProcessor& p)
       mix    (p.apvts, params::id::mix,        "Mix"),
       output (p.apvts, params::id::outputGain, "Out"),
       invert (p.apvts, params::id::phaseInvert, "Invert"),
-      bypass (p.apvts, params::id::bypass,      "Bypass")
+      bypass (p.apvts, params::id::bypass,      "Bypass"),
+      live   (p.apvts, params::id::liveFit,     "Live fit")
 {
     Theme::loadFonts();
     setLookAndFeel (&lookAndFeel);
@@ -61,6 +62,7 @@ GraphiteEditor::GraphiteEditor (GraphiteProcessor& p)
 
     addAndMakeVisible (invert);
     addAndMakeVisible (bypass);
+    addAndMakeVisible (live);
 
     for (std::size_t i = 0; i < toolButtons.size(); ++i)
     {
@@ -320,6 +322,7 @@ void GraphiteEditor::resized()
 
     invert.setBounds (sidebar.removeFromTop (kCheckHeight).withTrimmedLeft (4));
     bypass.setBounds (sidebar.removeFromTop (kCheckHeight).withTrimmedLeft (4));
+    live.setBounds   (sidebar.removeFromTop (kCheckHeight).withTrimmedLeft (4));
 
     sidebar.removeFromTop (Theme::Metrics::gap);
     analyserBox.setBounds (sidebar.removeFromTop (26));

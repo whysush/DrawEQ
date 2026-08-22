@@ -85,9 +85,9 @@ int main (int argc, char** argv)
         { "wide scoop",    notch (-12.0f, 2.0f, 800.0f) },
     };
 
-    std::printf ("%-14s  %8s  %8s  %9s  %9s\n",
-                 "case", "max dB", "rms dB", "cold ms", "warm ms");
-    std::printf ("%s\n", std::string (58, '-').c_str());
+    std::printf ("%-14s  %8s  %8s  %8s  %9s  %9s\n",
+                 "case", "cold dB", "deep dB", "rms dB", "deep ms", "warm ms");
+    std::printf ("%s\n", std::string (68, '-').c_str());
 
     for (const auto& c : corpus)
     {
@@ -95,12 +95,18 @@ int main (int argc, char** argv)
         fitter.prepare (kSr);
         fitter.setBellCount (bandCount);
 
+        const float coldErr = fitter.fit (c.target, CurveFitter::Effort::cold).maxErrorDb;
+
+        CurveFitter deepFitter;
+        deepFitter.prepare (kSr);
+        deepFitter.setBellCount (bandCount);
+
         const auto t0 = std::chrono::steady_clock::now();
-        const auto& cold = fitter.fit (c.target, true);
+        const auto& deep = deepFitter.fit (c.target, CurveFitter::Effort::deep);
         const auto t1 = std::chrono::steady_clock::now();
 
-        const float maxErr = cold.maxErrorDb;
-        const float rmsErr = cold.rmsErrorDb;
+        const float maxErr = deep.maxErrorDb;
+        const float rmsErr = deep.rmsErrorDb;
 
         // Warm timing is the number that decides whether dragging feels live,
         // so measure the worst of a run rather than a single lucky frame.
@@ -115,12 +121,12 @@ int main (int argc, char** argv)
                                   std::chrono::duration<double, std::milli> (w1 - w0).count());
         }
 
-        std::printf ("%-14s  %8.3f  %8.3f  %9.2f  %9.3f\n",
-                     c.name.c_str(), maxErr, rmsErr,
+        std::printf ("%-14s  %8.3f  %8.3f  %8.3f  %9.2f  %9.3f\n",
+                     c.name.c_str(), coldErr, maxErr, rmsErr,
                      std::chrono::duration<double, std::milli> (t1 - t0).count(),
                      worstWarm);
     }
 
-    std::printf ("\nbudgets (CONTEXT.md 10): warm < 2 ms, cold < 50 ms at 24 bands\n");
+    std::printf ("\nwarm runs while dragging; deep runs once when a stroke is committed\n");
     return 0;
 }

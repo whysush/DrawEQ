@@ -465,31 +465,92 @@ void CurveFitter::writeResult()
     result.rmsErrorDb = float (std::sqrt (sumSq / double (kFitPoints)));
 }
 
-const CurveFitter::Result& CurveFitter::fit (const CurveArray& target, bool cold)
+/** Deterministic jitter around the best solution so far.
+
+    Deterministic on purpose: a fit that returns a different answer each time it
+    is run on the same curve would make the regression corpus meaningless and
+    would be miserable to debug. The sequence is a fixed hash of the variant
+    index and the parameter index, not a random number generator. */
+void CurveFitter::perturbFromBest (unsigned int variant)
+{
+    theta = thetaBest;
+
+    for (int b = 0; b < numBands; ++b)
+    {
+        const int c = bandBase (b);
+
+        auto jitter = [variant, c] (int k, double scale)
+        {
+            unsigned int h = variant * 2654435761u + (unsigned int) (c + k) * 2246822519u;
+            h ^= h >> 13;
+            h *= 3266489917u;
+            h ^= h >> 16;
+            return (double (h & 0xffffu) / 32768.0 - 1.0) * scale;   // -scale .. +scale
+        };
+
+        theta[size_t (c + 0)] += jitter (0, 0.35);   // ln f: about a third of an octave
+        theta[size_t (c + 1)] += jitter (1, 3.0);    // dB
+        theta[size_t (c + 2)] += jitter (2, 0.40);   // ln Q
+    }
+
+    project();
+}
+
+const CurveFitter::Result& CurveFitter::fit (const CurveArray& target, Effort effort)
 {
     buildTargets (target);
 
-    if (cold || ! haveWarmStart)
+    if (effort == Effort::warm && ! haveWarmStart)
+        effort = Effort::cold;
+
+    if (effort == Effort::warm)
     {
+        // The curve moved a little, so the solution moved a little.
+        runLM (5);
+    }
+    else
+    {
+        const int iterations = effort == Effort::deep ? 150 : 40;
+
         // Two seeds, better one wins. A peak-picked seed is nearly always
         // ahead, but a target with no clear extrema (a pure tilt) is a case
         // where the spread seed converges to a better basin.
         seedCold();
-        const double e1 = runLM (40);
+        double bestError = runLM (iterations);
         thetaBest = theta;
 
         seedSpread();
-        const double e2 = runLM (40);
+        const double spreadError = runLM (iterations);
 
-        if (e1 <= e2)
-            theta = thetaBest;
+        if (spreadError < bestError)
+        {
+            bestError = spreadError;
+            thetaBest = theta;
+        }
 
+        if (effort == Effort::deep)
+        {
+            // Perturbed restarts. Levenberg-Marquardt only ever walks downhill,
+            // so on a curve with more structure than bands it settles into
+            // whichever basin the seed happened to land in. Shaking the best
+            // solution and re-converging is what finds the better basin, and it
+            // is only affordable because this runs once per stroke rather than
+            // thirty times a second.
+            for (unsigned int variant = 1; variant <= 3; ++variant)
+            {
+                perturbFromBest (variant);
+                const double e = runLM (80);
+
+                if (e < bestError)
+                {
+                    bestError = e;
+                    thetaBest = theta;
+                }
+            }
+        }
+
+        theta = thetaBest;
         haveWarmStart = true;
-    }
-    else
-    {
-        // Warm start: the curve moved a little, so the solution moved a little.
-        runLM (5);
     }
 
     writeResult();

@@ -27,6 +27,14 @@ struct CanvasContext
     const CurveWorker::UiSnapshot* ui = nullptr;
     const Analyzer* analyzer = nullptr;
 
+    /** The stroke as it stands right now, macros applied. The worker's snapshot
+        only updates when a curve is committed, so while a stroke is in progress
+        this is the only thing that knows what the user is drawing. */
+    const CurveArray* liveTarget = nullptr;
+
+    /** A stroke has been drawn but not yet realised by the DSP. */
+    bool commitPending = false;
+
     Mode mode = Mode::analog;
     bool analyzerOn = true;
     int  hoveredBand = -1;

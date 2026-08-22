@@ -48,7 +48,7 @@ private:
     juce::TextButton analyseButton { "Analyse" };
 
     BarSlider morph, tilt, smooth, shift, bands, mix, output;
-    Checkbox  invert, bypass;
+    Checkbox  invert, bypass, live;
 
     juce::ComboBox analyserBox;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> analyserAttachment;

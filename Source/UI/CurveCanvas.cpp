@@ -4,6 +4,7 @@
 #include "CanvasLayers/CurveLayer.h"
 #include "CanvasLayers/CursorLayer.h"
 #include "CanvasLayers/GraticuleLayer.h"
+#include "../Core/CurveShaping.h"
 
 namespace graphite
 {
@@ -48,6 +49,13 @@ void CurveCanvas::timerCallback()
         processor.analyzer().update (elapsed);
 
     ui = processor.worker().uiSnapshot();
+
+    // Recomputed every frame through the same macro chain the worker uses, so
+    // the ghost cannot drift from the curve the DSP will be asked for.
+    CurveSnapshot snap;
+    processor.worker().fillCurrentSnapshot (snap);
+    shaping::applyMacros (snap, liveTarget);
+
     repaint();
 }
 
@@ -63,6 +71,8 @@ CanvasContext CurveCanvas::makeContext() const
     ctx.analyzer   = &processor.analyzer();
     ctx.mode       = ui.mode;
     ctx.analyzerOn = processor.analyzer().anyEnabled();
+    ctx.liveTarget    = &liveTarget;
+    ctx.commitPending = processor.worker().commitPending();
     ctx.hoveredBand = current == Tool::node && mouseInside
                     ? BandTokenLayer::hitTest (ctx, mousePos) : -1;
     ctx.draggedBand = grabbedBand;
@@ -259,7 +269,7 @@ void CurveCanvas::mouseUp (const juce::MouseEvent& e)
     // A hand-edited band stack is not a small perturbation of the previous fit,
     // so the next one starts cold rather than warm.
     if (current == Tool::node && grabbedBand >= 0)
-        processor.worker().requestColdFit();
+        processor.worker().requestDeepFit();
 
     dragging = false;
     linePreview = false;
@@ -308,7 +318,7 @@ void CurveCanvas::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWh
             processor.curve().beginGesture();
             commitBands();
             processor.curve().endGesture();
-            processor.worker().requestColdFit();
+            processor.worker().requestDeepFit();
             return;
         }
     }
@@ -329,7 +339,7 @@ bool CurveCanvas::keyPressed (const juce::KeyPress& key)
     if (key == juce::KeyPress ('z', juce::ModifierKeys::commandModifier, 0))
     {
         processor.curve().undo();
-        processor.worker().requestColdFit();
+        processor.worker().requestDeepFit();
         return true;
     }
 
@@ -337,7 +347,7 @@ bool CurveCanvas::keyPressed (const juce::KeyPress& key)
                                     | juce::ModifierKeys::shiftModifier, 0))
     {
         processor.curve().redo();
-        processor.worker().requestColdFit();
+        processor.worker().requestDeepFit();
         return true;
     }
 

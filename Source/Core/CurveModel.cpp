@@ -40,15 +40,22 @@ void CurveModel::beginGesture()
     {
         pushUndoLocked();
         gestureOpen = true;
+        gestureActive.store (true, std::memory_order_release);
     }
 }
 
 void CurveModel::endGesture()
 {
     const std::lock_guard<std::mutex> g (lock);
+    const bool wasOpen = gestureOpen;
+
     gestureOpen = false;
     strokeOpen  = false;
     hasSwept    = false;
+    gestureActive.store (false, std::memory_order_release);
+
+    if (wasOpen)
+        gesturesCompleted.fetch_add (1, std::memory_order_release);
 }
 
 void CurveModel::startStroke (float hz, float db)

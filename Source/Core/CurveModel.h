@@ -45,6 +45,22 @@ public:
     void beginGesture();
     void endGesture();
 
+    /** True between mouse-down and mouse-up. The worker watches this so it can
+        leave the filter alone until a stroke is finished. Atomic rather than
+        lock-guarded: the worker polls it on every tick and must never block the
+        message thread mid-stroke. */
+    bool isGestureOpen() const noexcept { return gestureActive.load (std::memory_order_acquire); }
+
+    /** Number of gestures that have finished. The worker watches this rather
+        than only watching `isGestureOpen`, because a quick flick can begin and
+        end entirely between two worker ticks - the stroke would then never be
+        observed in progress, and the curve would quietly get a cheap fit
+        instead of the committed one. */
+    std::uint64_t gestureCount() const noexcept
+    {
+        return gesturesCompleted.load (std::memory_order_acquire);
+    }
+
     /** Anchors the stroke without painting, so the first segment has a start. */
     void startStroke (float hz, float db);
 
@@ -120,6 +136,8 @@ private:
 
     std::vector<CurveArray> undoStack, redoStack;
     bool gestureOpen = false;
+    std::atomic<bool> gestureActive { false };
+    std::atomic<std::uint64_t> gesturesCompleted { 0 };
 };
 
 } // namespace graphite

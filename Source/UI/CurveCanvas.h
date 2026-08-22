@@ -51,6 +51,7 @@ private:
 
     GraphiteProcessor& processor;
     CurveWorker::UiSnapshot ui;
+    CurveArray liveTarget {};
 
     Tool current = Tool::pencil;
     float brushOctaves = 0.5f;
