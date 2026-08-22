@@ -16,10 +16,10 @@
 
 namespace
 {
-/** A stroke with something to say: a low bump, a midrange scoop, an air lift,
-    and one notch too narrow to fit - so the residual ribbon has a reason to
-    show itself. */
-void drawDemoCurve (graphite::CurveModel& model)
+/** A stroke with something to say: a low bump, a midrange scoop, an air lift.
+    `withNotch` adds one gesture too narrow for any biquad cascade, which is
+    what gives the residual ribbon something to show. */
+void drawDemoCurve (graphite::CurveModel& model, bool withNotch)
 {
     model.beginGesture();
     model.startStroke (20.0f, 0.0f);
@@ -34,6 +34,9 @@ void drawDemoCurve (graphite::CurveModel& model)
     model.strokeTo (14000.0f, 8.0f, 0.6f, 1.0f, graphite::CurveModel::Brush::draw);
     model.strokeTo (20000.0f, 7.0f, 0.6f, 1.0f, graphite::CurveModel::Brush::draw);
     model.endGesture();
+
+    if (! withNotch)
+        return;
 
     model.beginGesture();
     model.startStroke (2600.0f, 0.0f);
@@ -58,16 +61,9 @@ int main (int argc, char** argv)
     processor.prepareToPlay (48000.0, 128);
 
     if (demo)
-        drawDemoCurve (processor.curve());
+        drawDemoCurve (processor.curve(), ribbon);
 
-    if (ribbon)
-    {
-        // Smoothing off, so the notch in the demo curve stays as sharp as it
-        // was drawn - which no biquad cascade can follow. This is the mode that
-        // shows the residual ribbon doing its job.
-        if (auto* smooth = processor.apvts.getParameter (graphite::params::id::smooth))
-            smooth->setValueNotifyingHost (0.0f);
-    }
+
 
     std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
 

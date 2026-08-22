@@ -41,12 +41,25 @@ void CurveLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     juce::Graphics::ScopedSaveState save (g);
     g.reduceClipRegion (ctx.plot.toNearestInt());
 
-    // The ghost is what the user has drawn, which during a stroke is ahead of
-    // anything the worker has seen.
+    // Three curves, and the distinction between the first two is the thing a
+    // previous version got wrong: the ghost is the hand, the target is what the
+    // macros made of it, and only the target is what the DSP chases.
     const auto& targetCurve = ctx.liveTarget != nullptr ? *ctx.liveTarget : ctx.ui->targetDb;
+    const auto& drawnCurve  = ctx.rawCurve != nullptr ? *ctx.rawCurve : targetCurve;
 
-    const auto ghost    = curvePath (targetCurve, ctx);
+    const auto ghost    = curvePath (drawnCurve, ctx);
+    const auto target   = curvePath (targetCurve, ctx);
     const auto achieved = curvePath (ctx.ui->achievedDb, ctx);
+
+    // Only worth a line of its own when the macros actually moved something.
+    bool macrosMatter = false;
+
+    for (std::size_t i = 0; i < drawnCurve.size(); ++i)
+        if (std::abs (drawnCurve[i] - targetCurve[i]) > 0.05f)
+        {
+            macrosMatter = true;
+            break;
+        }
 
     // --- residual ribbon --------------------------------------------------
     //
@@ -94,13 +107,20 @@ void CurveLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
         g.fillPath (filled);
     }
 
+    // --- the macro target, when the macros changed anything ---------------
+    if (macrosMatter)
+    {
+        g.setColour (Theme::Colour::of (Theme::Colour::ghost).withAlpha (0.30f));
+        g.strokePath (target, juce::PathStrokeType (1.0f));
+    }
+
     // --- ghost stroke: what you drew --------------------------------------
     //
     // Brighter while a commit is outstanding, because in that moment the ghost
     // is the only line telling the truth: the plot below it is still the old
     // filter, and the ribbon between them is the work not yet done.
     g.setColour (Theme::Colour::of (Theme::Colour::ghost)
-                     .withAlpha (ctx.commitPending ? 1.0f : 0.7f));
+                     .withAlpha (ctx.commitPending ? 1.0f : 0.8f));
     g.strokePath (ghost, juce::PathStrokeType (ctx.commitPending ? 2.0f : 1.5f));
 
     // --- plot: what you got -----------------------------------------------

@@ -357,3 +357,47 @@ does not.
 
 `liveFit` restores continuous re-fitting for anyone who wants the curve to
 follow their hand.
+
+---
+
+## The ghost draws the stroke, not the macro target
+
+A bug report: "the drawing offset is higher than where my cursor is."
+
+It was real, and the cause was a decision recorded further up this file. The
+ghost line was being drawn from the *post-macro* target rather than from the raw
+stroke, so smoothing sat between the user's hand and the line on screen.
+Smoothing pulls extremes toward their neighbourhood, which means it always
+lifts a cut - hence "higher", every time, never lower.
+
+Measured, drawing a dip at -14 dB with a half-octave brush:
+
+| smooth | drawn | displayed |
+|---|---|---|
+| 0 % | -14.00 dB | -14.00 dB |
+| 15 % (the old default) | -14.00 dB | **-12.78 dB** |
+| 40 % | -14.00 dB | -8.98 dB |
+
+The brush itself was exact the whole time - the raw curve read back -14.00 dB.
+Only the line was wrong.
+
+**Three changes.**
+
+- The ghost is now the raw stroke, which is what CONTEXT.md 9.4 says it is and
+  what an earlier entry here traded away for a tidier ribbon. That trade was
+  wrong: a drawing tool whose line does not land under the cursor is broken,
+  however good the reason.
+- The post-macro target gets its own faint line, drawn only when the macros
+  actually moved something, so the difference is visible and attributable
+  instead of silently folded into the ghost. The ribbon still spans target to
+  achieved, so `MAX ERR` keeps meaning fit error and nothing else.
+- **`smooth` now defaults to 0 %**, against CONTEXT.md 8.2's 15 %. That default
+  made sense when the fit had one frame to work in and needed the target
+  softened; the committed fit does not need the help, and blurring the stroke by
+  a fifth of an octave before the DSP sees it works against every other decision
+  in this file. The brush's own raised-cosine kernel already limits how sharp a
+  gesture can be, so hand tremor is bounded without it. Smoothing is one drag
+  away for anyone who wants it.
+
+On a normal drawn curve the result is now 0.10 dB of fit error with the ghost
+invisible beneath the plot, which is what "1:1" should look like.

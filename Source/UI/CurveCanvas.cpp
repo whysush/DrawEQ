@@ -54,6 +54,7 @@ void CurveCanvas::timerCallback()
     // the ghost cannot drift from the curve the DSP will be asked for.
     CurveSnapshot snap;
     processor.worker().fillCurrentSnapshot (snap);
+    rawCurve = snap.raw;
     shaping::applyMacros (snap, liveTarget);
 
     repaint();
@@ -71,6 +72,7 @@ CanvasContext CurveCanvas::makeContext() const
     ctx.analyzer   = &processor.analyzer();
     ctx.mode       = ui.mode;
     ctx.analyzerOn = processor.analyzer().anyEnabled();
+    ctx.rawCurve      = &rawCurve;
     ctx.liveTarget    = &liveTarget;
     ctx.commitPending = processor.worker().commitPending();
     ctx.hoveredBand = current == Tool::node && mouseInside

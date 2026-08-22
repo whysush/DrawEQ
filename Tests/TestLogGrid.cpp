@@ -90,3 +90,45 @@ TEST_CASE ("gaussian smoothing preserves level and removes detail", "[shaping]")
     REQUIRE (out[512] < 5.0f);          // the spike is spread...
     REQUIRE (out[520] > 0.1f);          // ...into its neighbourhood
 }
+
+TEST_CASE ("smoothing moves the curve away from the stroke, so the two are not one line",
+           "[shaping][accuracy]")
+{
+    // The ghost must be drawn from the raw stroke, not from the macro target.
+    // Smoothing pulls extremes toward their neighbourhood, so a cut always
+    // renders shallower than it was drawn - and a drawing tool whose line sits
+    // above the cursor is broken however good the reason.
+    CurveArray raw {};
+    raw.fill (0.0f);
+
+    const int centre = int (LogGrid::hzToIndex (400.0f));
+    const int halfWidth = int (LogGrid::octavesToBins (0.5f));
+
+    for (int i = centre - halfWidth; i <= centre + halfWidth; ++i)
+        raw[std::size_t (i)] = -14.0f;
+
+    CurveSnapshot snap;
+    snap.raw = raw;
+    snap.smoothOctaves = shaping::smoothPercentToOctaves (15.0f);   // the default
+
+    CurveArray target;
+    shaping::applyMacros (snap, target);
+
+    // The shift is largest at the shoulders of the cut, not at its centre -
+    // which is exactly where the eye is when it notices the line is not under
+    // the cursor.
+    float worstLift = 0.0f;
+
+    for (int i = centre - halfWidth; i <= centre + halfWidth; ++i)
+        worstLift = std::max (worstLift, target[std::size_t (i)] - raw[std::size_t (i)]);
+
+    INFO ("drawn " << raw[std::size_t (centre)] << " dB, worst lift " << worstLift << " dB");
+
+    // The direction is the whole point: smoothing lifts a cut, never deepens it.
+    REQUIRE (target[std::size_t (centre)] > raw[std::size_t (centre)]);
+    REQUIRE (worstLift > 1.0f);
+
+    // And the raw stroke is untouched, which is what makes it safe to draw as
+    // the ghost and what makes smoothing non-destructive (CONTEXT.md 6.3).
+    REQUIRE_THAT (double (raw[std::size_t (centre)]), WithinAbs (-14.0, 1.0e-6));
+}

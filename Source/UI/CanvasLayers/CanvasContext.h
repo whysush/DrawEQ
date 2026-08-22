@@ -27,9 +27,16 @@ struct CanvasContext
     const CurveWorker::UiSnapshot* ui = nullptr;
     const Analyzer* analyzer = nullptr;
 
-    /** The stroke as it stands right now, macros applied. The worker's snapshot
-        only updates when a curve is committed, so while a stroke is in progress
-        this is the only thing that knows what the user is drawing. */
+    /** Exactly what the pencil wrote, with no macros applied. This is the ghost
+        line, and it must pass under the cursor: a drawing tool whose line does
+        not land where you put it is broken, whatever the reason. */
+    const CurveArray* rawCurve = nullptr;
+
+    /** The same stroke after tilt, shift and smoothing - what the DSP is
+        actually asked for. Drawn separately and faintly, because it is a
+        consequence of the macros rather than of the user's hand. The worker's
+        own snapshot only updates on commit, so while a stroke is in progress
+        this is the only thing that knows what is being drawn. */
     const CurveArray* liveTarget = nullptr;
 
     /** A stroke has been drawn but not yet realised by the DSP. */
