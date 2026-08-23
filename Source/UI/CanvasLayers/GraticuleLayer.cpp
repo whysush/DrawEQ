@@ -17,22 +17,44 @@ void GraticuleLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
         { 10000.0f, true  }, { 20000.0f, false }
     };
 
+    // Dotted rules rather than solid ones. A grid is scaffolding, and dotting
+    // it keeps it legible while dropping its visual weight far enough that the
+    // curve never has to compete with it - and dots are the one grid style
+    // that costs nothing to land on whole pixels.
+    auto dottedVertical = [&g] (int x, int top, int bottom)
+    {
+        for (int y = top; y < bottom; y += 3)
+            g.fillRect (x, y, 1, 1);
+    };
+
+    auto dottedHorizontal = [&g] (int y, int left, int right)
+    {
+        for (int x = left; x < right; x += 3)
+            g.fillRect (x, y, 1, 1);
+    };
+
     for (const auto& line : verticals)
     {
-        const float x = ctx.xForHz (line.hz);
-
         g.setColour (line.isDecade ? major : minor);
-        g.drawVerticalLine (int (std::round (x)), ctx.plot.getY(), ctx.plot.getBottom());
+        dottedVertical (int (std::round (ctx.xForHz (line.hz))),
+                        int (ctx.plot.getY()), int (ctx.plot.getBottom()));
     }
 
     for (int step = int (ctx.minDb / 6.0f); float (step) * 6.0f <= ctx.maxDb + 0.1f; ++step)
     {
         const float db = float (step) * 6.0f;
-        const float y = ctx.yForDb (db);
         const bool isZero = step == 0;
 
         g.setColour (isZero ? major : minor);
-        g.drawHorizontalLine (int (std::round (y)), ctx.plot.getX(), ctx.plot.getRight());
+
+        // The zero line is the one rule worth drawing solid: it is the
+        // reference every reading is taken against.
+        if (isZero)
+            g.drawHorizontalLine (int (std::round (ctx.yForDb (db))),
+                                  ctx.plot.getX(), ctx.plot.getRight());
+        else
+            dottedHorizontal (int (std::round (ctx.yForDb (db))),
+                              int (ctx.plot.getX()), int (ctx.plot.getRight()));
     }
 
     // The frequency scale gets its own ruled strip below the plot rather than
@@ -53,7 +75,7 @@ void GraticuleLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
                     juce::Justification::centred);
     }
 
-    for (float db : { -12.0f, -6.0f, 6.0f, 12.0f })
+    for (float db : { -18.0f, -12.0f, -6.0f, 6.0f, 12.0f, 18.0f })
     {
         const int y = int (ctx.yForDb (db));
         g.drawText ((db > 0 ? "" : "-") + juce::String (int (std::abs (db))),

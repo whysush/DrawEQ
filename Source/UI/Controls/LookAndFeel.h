@@ -11,18 +11,14 @@ namespace graphite
     "on" state mean the same thing everywhere.
 
     Two rules carry the whole look. Anything the user can grab or has switched
-    on is amber; anything reporting what the filter is doing is blue. Nothing is
-    bevelled, and the only depth in the panel comes from the plot plate being
-    darker than the face it sits in.
+    on is amber; anything reporting what the filter is doing is blue. Every
+    edge is square and lands on a whole pixel - the only depth in the panel
+    comes from the plate being darker than the face it sits in.
 */
 class GraphiteLookAndFeel final : public juce::LookAndFeel_V4
 {
 public:
     GraphiteLookAndFeel();
-
-    void drawRotarySlider (juce::Graphics&, int x, int y, int width, int height,
-                           float sliderPos, float startAngle, float endAngle,
-                           juce::Slider&) override;
 
     void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&,
                                bool highlighted, bool down) override;

@@ -22,10 +22,10 @@ public:
         g.setColour (Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::raised)
                          .brighter (highlighted ? 0.08f : 0.0f)
                          .darker (down ? 0.10f : 0.0f));
-        g.fillRoundedRectangle (bounds, 2.0f);
+        g.fillRect (bounds);
 
         g.setColour (Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.7f));
-        g.drawRoundedRectangle (bounds, 2.0f, 1.0f);
+        g.drawRect (bounds, 1.0f);
 
         Theme::drawTrackedLabel (g, getButtonText(), getLocalBounds(),
                                  Theme::Colour::of (on ? Theme::Colour::textHi
@@ -35,7 +35,7 @@ public:
         if (hasKeyboardFocus (false))
         {
             g.setColour (Theme::Colour::of (Theme::Colour::focus));
-            g.drawRoundedRectangle (bounds, 2.0f, Theme::Metrics::focusRing);
+            g.drawRect (bounds, Theme::Metrics::focusRing);
         }
     }
 };

@@ -2,10 +2,9 @@
 
 #include "Controls/Checkbox.h"
 #include "Controls/Console.h"
-#include "Controls/Knob.h"
+#include "Controls/BarControl.h"
 #include "Controls/SlotStrip.h"
 #include "Controls/ToolButton.h"
-#include "Controls/ValueField.h"
 #include "CurveCanvas.h"
 
 namespace graphite
@@ -14,12 +13,13 @@ namespace graphite
 class GraphiteProcessor;
 
 /**
-    A grey instrument face: title strip across the top, the selected band's
-    controls down the left, settings down the right, tools and slots along the
-    bottom, and the plot plate taking everything that is left.
+    A dark instrument face: a thin title strip, settings down the right, two
+    rows of controls along the bottom, and the plot plate taking everything
+    left over.
 
-    The plate is the instrument and the chrome is the settings for it, so the
-    plate gets every pixel the chrome does not need.
+    Every control is the same segmented bar, which is most of what makes this
+    fit in 880 by 400: a bar is a fifth the height of a dial, so the panel needs
+    two short rows where it used to need a column down each side.
 */
 class GraphiteEditor final : public juce::AudioProcessorEditor,
                              private juce::Timer
@@ -46,10 +46,10 @@ private:
     SlotStrip   slots;
     Console     status;
 
-    // Left column: whichever band the Node tool has hold of.
-    Knob bandFreq { "Freq", { 20.0, 20000.0 }, 0.1, "Hz" };
-    Knob bandGain { "Gain", { -30.0, 30.0 }, 0.01, "dB" };
-    Knob bandQ    { "Q",    { 0.1, 18.0 }, 0.01, "" };
+    // Whichever band the Node tool has hold of, edited numerically.
+    BarControl bandFreq { "Freq", { 20.0, 20000.0 }, 0.1, "Hz", 34 };
+    BarControl bandGain { "Gain", { -30.0, 30.0 }, 0.01, "dB", 34 };
+    BarControl bandQ    { "Q",    { 0.1, 18.0 }, 0.01, "", 34 };
     bool suppressBandCallback = false;
 
     std::array<std::unique_ptr<ToolButton>, 5> toolButtons;
@@ -58,12 +58,12 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment,
                                                                            analyserAttachment;
 
-    ValueField bands, mix, output, tilt, smooth, shift, morph;
+    BarControl bands, mix, output, tilt, smooth, shift, morph;
     Checkbox   invert, bypass, live;
     juce::TextButton analyseButton { "Analyse" };
 
     // Painted regions, kept so live readouts can repaint without the canvas.
-    juce::Rectangle<int> titleArea, leftColumn, rightColumn, bottomStrip, plateArea;
+    juce::Rectangle<int> titleArea, rightColumn, bottomStrip, plateArea, bandArea;
 
     /** Captions for the controls that do not draw their own. Collected during
         layout so paint() has nowhere to disagree with resized() about where

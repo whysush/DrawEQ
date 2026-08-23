@@ -7,10 +7,9 @@ namespace graphite
 
 namespace
 {
-    constexpr int kToolCell    = 34;
-    constexpr int kCaption     = 14;
-    constexpr int kFieldHeight = 32;
-    constexpr int kRowHeight   = 20;
+    constexpr int kToolCell  = 26;
+    constexpr int kCaption   = 12;
+    constexpr int kRowHeight = Theme::Metrics::rowHeight;
 
     const Tool kTools[] { Tool::pencil, Tool::line, Tool::smooth, Tool::erase, Tool::node };
 
@@ -32,13 +31,13 @@ GraphiteEditor::GraphiteEditor (GraphiteProcessor& p)
       canvas (p),
       slots (p),
       status (p),
-      bands  (p.apvts, params::id::bandCount,  "Bands"),
-      mix    (p.apvts, params::id::mix,        "Mix"),
-      output (p.apvts, params::id::outputGain, "Gain"),
-      tilt   (p.apvts, params::id::tilt,       "Tilt"),
-      smooth (p.apvts, params::id::smooth,     "Smooth"),
-      shift  (p.apvts, params::id::freqShift,  "Shift"),
-      morph  (p.apvts, params::id::morph,      "Morph"),
+      bands  (p.apvts, params::id::bandCount,  "Bands", 34),
+      mix    (p.apvts, params::id::mix,        "Mix",   34),
+      output (p.apvts, params::id::outputGain, "Out",   34),
+      tilt   (p.apvts, params::id::tilt,       "Tilt",  40),
+      smooth (p.apvts, params::id::smooth,     "Smth",  40),
+      shift  (p.apvts, params::id::freqShift,  "Shift", 40),
+      morph  (p.apvts, params::id::morph,      "Mrph",  40),
       invert (p.apvts, params::id::phaseInvert, "Inv"),
       bypass (p.apvts, params::id::bypass,      "Byp"),
       live   (p.apvts, params::id::liveFit,     "Live")
@@ -56,7 +55,7 @@ GraphiteEditor::GraphiteEditor (GraphiteProcessor& p)
     for (auto* c : { &invert, &bypass, &live })
         addAndMakeVisible (*c);
 
-    // --- left column: the band the Node tool has hold of -------------------
+    // --- the band the Node tool has hold of --------------------------------
     bandFreq.setSkewForFrequency();
 
     for (auto* k : { &bandFreq, &bandGain, &bandQ })
@@ -220,10 +219,12 @@ void GraphiteEditor::refreshBandColumn()
 
     suppressBandCallback = false;
 
+    // Hidden rather than dimmed. Three dead bars take the same room as three
+    // live ones, and the space is better spent saying how to get a live one.
     for (auto* k : { &bandFreq, &bandGain, &bandQ })
-        k->setEnabledLook (have);
+        k->setVisible (have);
 
-    repaint (leftColumn);
+    repaint (bandArea);
 }
 
 void GraphiteEditor::pushBandEdit()
@@ -279,76 +280,45 @@ void GraphiteEditor::paint (juce::Graphics& g)
         g.setColour (Theme::Colour::of (Theme::Colour::titleBar));
         g.fillRect (titleArea);
 
-        auto area = titleArea.reduced (10, 0);
+        auto area = titleArea.reduced (7, 0);
 
-        // A single lamp, amber when the filter is doing something and dark when
-        // it is flat. It is the only ornament on the panel and it is carrying a
-        // real fact.
-        const bool active = ui.valid && ui.maxErrorDb >= 0.0f && ui.numBands > 0;
-        const auto lamp = juce::Rectangle<float> (11.0f, 11.0f)
-                              .withCentre ({ float (area.getX()) + 6.0f,
-                                             float (area.getCentreY()) });
+        // A single lamp, amber while the filter is doing something. It is the
+        // only ornament on the panel and it is carrying a real fact.
+        const bool active = ui.valid && ui.numBands > 0;
         g.setColour (Theme::Colour::of (active ? Theme::Colour::accent : Theme::Colour::recessed));
-        g.fillEllipse (lamp);
+        g.fillRect (area.getX(), area.getCentreY() - 3, 6, 6);
 
-        area.removeFromLeft (24);
-        Theme::drawTrackedLabel (g, "Graphite", area.removeFromLeft (150),
+        area.removeFromLeft (14);
+        Theme::drawTrackedLabel (g, "Graphite", area.removeFromLeft (120),
                                  Theme::Colour::of (Theme::Colour::titleText),
                                  juce::Justification::centredLeft,
-                                 Theme::Metrics::titleSize, 0.02f);
+                                 Theme::Metrics::titleSize, 0.10f);
     }
 
     // --- the plate ---------------------------------------------------------
     g.setColour (Theme::Colour::of (Theme::Colour::board));
     g.fillRect (plateArea);
-    g.setColour (Theme::Colour::of (Theme::Colour::recessed));
+    g.setColour (Theme::Colour::of (Theme::Colour::hairline));
     g.drawRect (plateArea, 1);
-
-    // --- column captions ---------------------------------------------------
-    {
-        Band band;
-        const bool have = canvas.selectedBand (band);
-
-        auto caption = leftColumn.withHeight (kCaption).reduced (6, 0);
-        Theme::drawTrackedLabel (g, have ? "Band " + juce::String (band.id + 1) : "No band",
-                                 caption,
-                                 Theme::Colour::of (have ? Theme::Colour::textHi
-                                                         : Theme::Colour::textLo),
-                                 juce::Justification::centred);
-
-        if (! have)
-        {
-            // Under the dials, not over them: the dials are still the subject
-            // even when there is nothing selected to put in them.
-            g.setFont (Theme::labelFont (Theme::Metrics::labelSize));
-            g.setColour (Theme::Colour::of (Theme::Colour::textLo));
-            g.drawFittedText ("Node tool,\nthen click\na band",
-                              leftColumn.withTrimmedTop (leftColumn.getHeight() - 56)
-                                        .reduced (6, 4),
-                              juce::Justification::centredTop, 3);
-        }
-    }
 
     // --- bottom strip ------------------------------------------------------
     {
-        auto area = bottomStrip;
-
         g.setColour (Theme::Colour::of (Theme::Colour::panel));
-        g.fillRect (area);
-
-        auto left = area.reduced (8, 0);
-        paintCaption (g, left.withY (area.getY() + 4).withWidth (40), "Tool");
+        g.fillRect (bottomStrip);
 
         // MAX ERR sits with the tools because it is a fact about the drawing,
         // not a setting. Amber above 3 dB, where the fitter stops telling the
         // truth about the stroke (CONTEXT.md 7.5).
         const bool poor = ui.valid && ui.maxErrorDb > 3.0f;
-        auto readout = area.removeFromRight (150).reduced (8, 14);
+        auto readout = bottomStrip.reduced (5, 3).removeFromTop (kRowHeight)
+                                  .removeFromRight (84);
 
-        paintCaption (g, readout.removeFromLeft (56).withY (readout.getY() + 1), "Max err");
+        Theme::drawTrackedLabel (g, "Err", readout.removeFromLeft (26),
+                                 Theme::Colour::of (Theme::Colour::textMid),
+                                 juce::Justification::centredLeft);
 
         g.setColour (Theme::Colour::of (poor ? Theme::Colour::warn : Theme::Colour::field));
-        g.fillRoundedRectangle (readout.toFloat(), 2.0f);
+        g.fillRect (readout);
         g.setFont (Theme::monoFont (Theme::Metrics::smallSize));
         g.setColour (Theme::Colour::of (poor ? Theme::Colour::titleText
                                              : Theme::Colour::fieldText));
@@ -359,103 +329,129 @@ void GraphiteEditor::paint (juce::Graphics& g)
     // --- captions for the controls that do not draw their own -------------
     for (const auto& c : captions)
         paintCaption (g, c.first, c.second);
+
+    // The band row says which band it is editing, or that there is none.
+    {
+        Band band;
+        const bool have = canvas.selectedBand (band);
+
+        g.setColour (Theme::Colour::of (Theme::Colour::hairline));
+        g.fillRect (bandArea.getX() - 4, bandArea.getY() + 2, 1, bandArea.getHeight() - 4);
+
+        if (! have)
+        {
+            g.setFont (Theme::labelFont (Theme::Metrics::labelSize));
+            g.setColour (Theme::Colour::of (Theme::Colour::textLo));
+            g.drawText ("node tool " + juce::String::fromUTF8 ("\xc2\xb7")
+                            + " click a band to edit it",
+                        bandArea, juce::Justification::centredLeft);
+        }
+        else
+        {
+            Theme::drawTrackedLabel (g, "Band " + juce::String (band.id + 1),
+                                     bandArea.withWidth (0),
+                                     Theme::Colour::of (Theme::Colour::textMid),
+                                     juce::Justification::centredLeft);
+        }
+    }
 }
 
 void GraphiteEditor::resized()
 {
     auto bounds = getLocalBounds();
+    captions.clear();
 
     titleArea = bounds.removeFromTop (Theme::Metrics::titleBarHeight);
-    status.setBounds (titleArea.reduced (12, 0).withTrimmedLeft (200));
+    status.setBounds (titleArea.reduced (8, 0).withTrimmedLeft (140));
 
     bottomStrip = bounds.removeFromBottom (Theme::Metrics::bottomStripHeight);
 
     {
-        auto row = bottomStrip.reduced (8, 0);
-        row.removeFromRight (150);            // MAX ERR, painted
+        auto strip = bottomStrip.reduced (5, 3);
+        auto top = strip.removeFromTop (kRowHeight);
+        strip.removeFromTop (2);
+        auto lower = strip.removeFromTop (kRowHeight);
 
-        auto toolRow = row.removeFromLeft (44 + int (toolButtons.size()) * (kToolCell + 4));
-        toolRow.removeFromLeft (44);          // "Tool" caption, painted
-        toolRow = toolRow.withSizeKeepingCentre (toolRow.getWidth(), kToolCell);
-
-        for (auto& b : toolButtons)
+        // --- upper row: tools, slots, and the error readout ----------------
         {
-            b->setBounds (toolRow.removeFromLeft (kToolCell));
-            toolRow.removeFromLeft (4);
+            auto row = top;
+            auto toolRow = row.removeFromLeft (int (toolButtons.size()) * (kToolCell + 2));
+
+            for (auto& b : toolButtons)
+            {
+                b->setBounds (toolRow.removeFromLeft (kToolCell));
+                toolRow.removeFromLeft (2);
+            }
+
+            row.removeFromLeft (8);
+            row.removeFromRight (86);          // MAX ERR, painted
+            slots.setBounds (row.removeFromLeft (juce::jmin (row.getWidth(), 250)));
         }
 
-        row.removeFromLeft (10);
-
-        // The four macros live down here with the tools rather than in the
-        // right column: they act on the drawing, and the drawing is what the
-        // bottom of the panel is about.
-        auto macros = row.removeFromRight (4 * 74).withSizeKeepingCentre (4 * 74, kFieldHeight);
-
-        for (auto* f : { &tilt, &smooth, &shift, &morph })
+        // --- lower row: the four macros, then the selected band ------------
         {
-            f->setBounds (macros.removeFromLeft (70));
-            macros.removeFromLeft (4);
-        }
+            auto row = lower;
+            const int macroWidth = 128;
 
-        row.removeFromRight (10);
-        slots.setBounds (row.withSizeKeepingCentre (row.getWidth(), 26));
+            for (auto* f : { &tilt, &smooth, &shift, &morph })
+            {
+                f->setBounds (row.removeFromLeft (macroWidth));
+                row.removeFromLeft (2);
+            }
+
+            row.removeFromLeft (6);
+            bandArea = row;
+
+            const int bandWidth = juce::jmax (60, row.getWidth() / 3 - 2);
+
+            for (auto* k : { &bandFreq, &bandGain, &bandQ })
+            {
+                k->setBounds (row.removeFromLeft (bandWidth));
+                row.removeFromLeft (2);
+            }
+        }
     }
 
-    leftColumn  = bounds.removeFromLeft (Theme::Metrics::leftColumnWidth);
     rightColumn = bounds.removeFromRight (Theme::Metrics::rightColumnWidth);
 
-    // --- left column -------------------------------------------------------
     {
-        auto column = leftColumn.reduced (6, 4);
-        column.removeFromTop (kCaption + 2);   // "Band n", painted
+        auto column = rightColumn.reduced (5, 3);
 
-        const int knobHeight = juce::jmin (78, column.getHeight() / 3 - 4);
-
-        for (auto* k : { &bandFreq, &bandGain, &bandQ })
-        {
-            k->setBounds (column.removeFromTop (knobHeight));
-            column.removeFromTop (4);
-        }
-    }
-
-    // --- right column ------------------------------------------------------
-    {
-        auto column = rightColumn.reduced (6, 4);
-
-        captions.clear();
-
-        analyseButton.setBounds (column.removeFromTop (22));
-        column.removeFromTop (4);
-        analyserBox.setBounds (column.removeFromTop (kRowHeight));
-        column.removeFromTop (10);
+        analyseButton.setBounds (column.removeFromTop (18));
+        column.removeFromTop (2);
+        analyserBox.setBounds (column.removeFromTop (18));
+        column.removeFromTop (7);
 
         auto labelled = [&] (juce::Component& c, const juce::String& text)
         {
             captions.emplace_back (column.removeFromTop (kCaption), text);
-            c.setBounds (column.removeFromTop (kRowHeight));
-            column.removeFromTop (6);
+            c.setBounds (column.removeFromTop (18));
+            column.removeFromTop (5);
         };
 
         labelled (modeBox, "Mode");
         labelled (fidelityBox, "Fidelity");
         labelled (shapeBox, "Shape");
 
+        column.removeFromTop (2);
+
         for (auto* f : { &bands, &mix, &output })
         {
-            f->setBounds (column.removeFromTop (kFieldHeight));
-            column.removeFromTop (4);
+            f->setBounds (column.removeFromTop (kRowHeight));
+            column.removeFromTop (1);
         }
 
-        column.removeFromTop (6);
-
-        auto switches = column.removeFromTop (22);
+        // The three switches sit at the bottom of the column, so the space the
+        // panel has spare collects in one place rather than as a gap after
+        // every control.
+        auto switches = column.removeFromBottom (18);
         const int cell = switches.getWidth() / 3;
-        invert.setBounds (switches.removeFromLeft (cell).reduced (1, 0));
-        bypass.setBounds (switches.removeFromLeft (cell).reduced (1, 0));
-        live.setBounds   (switches.reduced (1, 0));
+        invert.setBounds (switches.removeFromLeft (cell));
+        bypass.setBounds (switches.removeFromLeft (cell));
+        live.setBounds   (switches);
     }
 
-    plateArea = bounds.reduced (Theme::Metrics::gap, 4);
+    plateArea = bounds.reduced (Theme::Metrics::gap, 3);
     canvas.setBounds (plateArea.reduced (1));
 }
 

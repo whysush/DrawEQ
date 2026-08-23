@@ -20,60 +20,6 @@ GraphiteLookAndFeel::GraphiteLookAndFeel()
     setColour (juce::PopupMenu::highlightedTextColourId, Theme::Colour::of (Theme::Colour::textHi));
 }
 
-void GraphiteLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height,
-                                            float sliderPos, float startAngle, float endAngle,
-                                            juce::Slider& s)
-{
-    const auto bounds = juce::Rectangle<int> (x, y, width, height).toFloat().reduced (2.0f);
-    const float radius = juce::jmin (bounds.getWidth(), bounds.getHeight()) * 0.5f;
-    const auto centre = bounds.getCentre();
-    const float angle = startAngle + sliderPos * (endAngle - startAngle);
-
-    // A dark body, then the value as a thin arc outside it. The body is what
-    // makes the control read as a physical knob; the arc is what makes it read
-    // as a number, and the two jobs are better done by separate marks than by
-    // one bevelled dial trying to do both.
-    const float bodyRadius = radius * 0.72f;
-    g.setColour (Theme::Colour::of (Theme::Colour::board));
-    g.fillEllipse (juce::Rectangle<float> (bodyRadius * 2.0f, bodyRadius * 2.0f)
-                       .withCentre (centre));
-
-    const float arcRadius = radius - 1.5f;
-    juce::Path track;
-    track.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f,
-                         startAngle, endAngle, true);
-    g.setColour (Theme::Colour::of (Theme::Colour::recessed));
-    g.strokePath (track, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved,
-                                               juce::PathStrokeType::rounded));
-
-    // Bipolar parameters fill outward from the centre, so "no change" reads as
-    // an empty dial rather than a half-full one.
-    const bool bipolar = s.getMinimum() < 0.0 && s.getMaximum() > 0.0;
-    const float originPos = bipolar
-        ? float ((0.0 - s.getMinimum()) / (s.getMaximum() - s.getMinimum())) : 0.0f;
-    const float originAngle = startAngle + originPos * (endAngle - startAngle);
-
-    juce::Path fill;
-    fill.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f,
-                        juce::jmin (originAngle, angle), juce::jmax (originAngle, angle), true);
-    g.setColour (Theme::Colour::of (s.isEnabled() ? Theme::Colour::plot : Theme::Colour::recessed));
-    g.strokePath (fill, juce::PathStrokeType (2.5f, juce::PathStrokeType::curved,
-                                              juce::PathStrokeType::rounded));
-
-    juce::Path pointer;
-    pointer.startNewSubPath (centre.x, centre.y - bodyRadius * 0.25f);
-    pointer.lineTo (centre.x, centre.y - bodyRadius + 1.5f);
-    g.setColour (Theme::Colour::of (Theme::Colour::textOnPlate));
-    g.strokePath (pointer, juce::PathStrokeType (1.8f),
-                  juce::AffineTransform::rotation (angle, centre.x, centre.y));
-
-    if (s.hasKeyboardFocus (false))
-    {
-        g.setColour (Theme::Colour::of (Theme::Colour::focus));
-        g.drawEllipse (bounds, Theme::Metrics::focusRing);
-    }
-}
-
 void GraphiteLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b,
                                                 const juce::Colour&, bool highlighted, bool down)
 {
@@ -83,15 +29,15 @@ void GraphiteLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button&
     g.setColour (Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::raised)
                      .brighter (highlighted ? 0.08f : 0.0f)
                      .darker (down ? 0.10f : 0.0f));
-    g.fillRoundedRectangle (bounds, 2.0f);
+    g.fillRect (bounds);
 
     g.setColour (Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.7f));
-    g.drawRoundedRectangle (bounds, 2.0f, 1.0f);
+    g.drawRect (bounds, 1.0f);
 
     if (b.hasKeyboardFocus (false))
     {
         g.setColour (Theme::Colour::of (Theme::Colour::focus));
-        g.drawRoundedRectangle (bounds.reduced (0.5f), 2.0f, Theme::Metrics::focusRing);
+        g.drawRect (bounds, Theme::Metrics::focusRing);
     }
 }
 
@@ -111,10 +57,10 @@ void GraphiteLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height
     auto bounds = juce::Rectangle<int> (0, 0, width, height).toFloat().reduced (0.5f);
 
     g.setColour (Theme::Colour::of (Theme::Colour::raised));
-    g.fillRoundedRectangle (bounds, 2.0f);
+    g.fillRect (bounds);
     g.setColour (Theme::Colour::of (box.hasKeyboardFocus (false) ? Theme::Colour::focus
                                                                  : Theme::Colour::recessed));
-    g.drawRoundedRectangle (bounds, 2.0f, 1.0f);
+    g.drawRect (bounds, 1.0f);
 
     // Drawn rather than typed: a triangle glyph is exactly the sort of
     // character a bundled face may not carry, and a missing one renders as tofu.

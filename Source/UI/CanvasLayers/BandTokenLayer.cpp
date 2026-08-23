@@ -62,26 +62,30 @@ void BandTokenLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
         const bool hot  = i == ctx.hoveredBand || i == ctx.draggedBand;
 
         const auto colour = Theme::bandColour (b.freqHz);
-        const float radius = Theme::Metrics::tokenRadius * (hot ? 1.12f : 1.0f);
-        const auto circle = juce::Rectangle<float> (radius * 2.0f, radius * 2.0f).withCentre (centre);
+        const int side = int (Theme::Metrics::tokenRadius * 2.0f) + (hot ? 2 : 0);
+
+        // Square handles, landed on whole pixels. Solid rather than outlined:
+        // against a dark plate a filled handle is unambiguously a thing to
+        // grab, and the number stays readable where an outline and its digit
+        // would start to merge.
+        const auto cell = juce::Rectangle<int> (side, side)
+                              .withCentre ({ int (std::round (centre.x)),
+                                             int (std::round (centre.y)) });
 
         const float alpha = idle ? 0.4f : 1.0f;
 
-        // Solid discs, not rings. Against a dark plate a filled handle is
-        // unambiguously a thing to grab, and the number stays readable at
-        // 20 px where a ring's outline and its digit start to merge.
         g.setColour (colour.withAlpha (alpha));
-        g.fillEllipse (circle);
+        g.fillRect (cell);
 
         if (hot)
         {
-            g.setColour (Theme::Colour::of (Theme::Colour::titleText).withAlpha (0.9f));
-            g.drawEllipse (circle.expanded (1.5f), 1.5f);
+            g.setColour (Theme::Colour::of (Theme::Colour::titleText));
+            g.drawRect (cell.expanded (2), 1);
         }
 
         g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
         g.setColour (Theme::Colour::of (Theme::Colour::board).withAlpha (alpha));
-        g.drawText (juce::String (i + 1), circle.toNearestInt(), juce::Justification::centred);
+        g.drawText (juce::String (i + 1), cell, juce::Justification::centred);
 
         if (! hot)
             continue;
@@ -101,8 +105,10 @@ void BandTokenLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
                             .withCentre ({ int (centre.x), int (centre.y) - 24 })
                             .constrainedWithin (ctx.plot.toNearestInt());
 
-        g.setColour (Theme::Colour::of (Theme::Colour::board).withAlpha (0.92f));
-        g.fillRoundedRectangle (box.toFloat(), 3.0f);
+        g.setColour (Theme::Colour::of (Theme::Colour::board).withAlpha (0.94f));
+        g.fillRect (box);
+        g.setColour (Theme::Colour::of (Theme::Colour::hairline));
+        g.drawRect (box, 1);
         g.setColour (Theme::Colour::of (Theme::Colour::textOnPlate));
         g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
         g.drawText (text, box, juce::Justification::centred);

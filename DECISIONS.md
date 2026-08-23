@@ -485,3 +485,47 @@ and offering a control that the next fit would overwrite would be a lie. Its
 `Scale` control is likewise absent: the plate shows the full +/-30 dB the curve
 model allows, which wastes some vertical space on a gentle curve but never
 displays a -30 dB cut as though it were -20.
+
+---
+
+## Dark, pixel-crisp, and tight
+
+Four changes at once, on request: dark mode, a more pixelated look, bars instead
+of knobs, and a smaller window with less air in it. The window went from
+1040x500 to **880x400** - 32 % less area - without dropping a single control.
+
+**One control type did most of the tightening.** `Knob` and `ValueField` are both
+gone, replaced by `BarControl`: a caption, a bar built from discrete cells, and
+a number, in one 22 px row. A bar is a fifth the height of a dial, so the panel
+needs two short rows along the bottom where it previously needed a column down
+each side. The left column is gone entirely and the selected band's frequency,
+gain and Q moved into the second bottom row.
+
+**Cells, not fills.** A poured bar has to be measured against its ends to be
+read; a counted one can be read directly. The cells are 4 px with a 1 px gap, so
+they land on whole pixels by construction, which is most of where the crispness
+comes from. A single brighter cell marks the value, so a bipolar bar still says
+which side of centre it is on when it is nearly empty.
+
+**What "pixelated" was applied to, and what it was not.** Every corner is square,
+every rule is dotted, band handles became squares on whole-pixel centres, and
+labels moved to the monospaced face because at 10 px its stems land on pixel
+boundaries. The **curve stays antialiased**. It is the measurement, and
+stair-stepping it would make it harder to read without making it more honest -
+pixelation is a treatment for the chrome, not for the data.
+
+The zero line is the one rule still drawn solid, because it is the reference
+every reading on the plate is taken against.
+
+**The plate now shows +/-24 dB** rather than the model's +/-30. Drawing is bounded
+by what is on screen, so nothing is hidden by the choice: it only means a shape
+loaded from a preset can have its last few dB, at the extreme edges of the
+spectrum, drawn flat against the rail. In exchange the curve occupies a useful
+fraction of the plate instead of a third of it - which was the largest single
+piece of the "lot of open space".
+
+**Bars were briefly unreadable.** The first pass gave the right column 118 px, of
+which the caption and number took 82, leaving a seven-cell bar. Widening the
+column and narrowing the number to 32 px fixed it. Worth recording because the
+failure mode is specific to counted bars: a poured bar degrades gracefully into
+a thin line, a counted one stops being a bar at all.

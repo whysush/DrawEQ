@@ -123,7 +123,7 @@ void ToolButton::paintButton (juce::Graphics& g, bool highlighted, bool down)
     g.fillRect (bounds);
 
     g.setColour (Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::hairline));
-    g.drawRect (bounds, on ? 1.4f : 1.0f);
+    g.drawRect (bounds, 1.0f);
 
     drawIcon (g, tool, bounds.reduced (bounds.getWidth() * 0.14f),
               Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::textMid),

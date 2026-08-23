@@ -39,7 +39,9 @@ void loadFonts()
    #endif
 }
 
-juce::Font labelFont (float height) { return makeFont (grotesk, height, false); }
+// Monospaced labels: at 10 px on a pixel grid it is the face whose stems
+// land on whole pixels, and the wordmark is the only thing set in the grotesk.
+juce::Font labelFont (float height) { return makeFont (mono, height, true); }
 juce::Font monoFont  (float height) { return makeFont (mono, height, true); }
 juce::Font titleFont()              { return makeFont (grotesk, Metrics::titleSize, false); }
 
