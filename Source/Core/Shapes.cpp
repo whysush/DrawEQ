@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <initializer_list>
 
-namespace graphite::shapes
+namespace draweq::shapes
 {
 
 const char* name (Shape s)
@@ -128,4 +128,4 @@ void build (Shape shape, double sr, CurveArray& out)
     }
 }
 
-} // namespace graphite::shapes
+} // namespace draweq::shapes

@@ -2,10 +2,10 @@
 
 #include "LookAndFeel.h"
 
-namespace graphite
+namespace draweq
 {
 
-class GraphiteProcessor;
+class DrawEQProcessor;
 
 /**
     The status lines under the sidebar.
@@ -19,7 +19,7 @@ class Console final : public juce::Component,
                       private juce::Timer
 {
 public:
-    explicit Console (GraphiteProcessor&);
+    explicit Console (DrawEQProcessor&);
     ~Console() override;
 
     void paint (juce::Graphics&) override;
@@ -27,9 +27,9 @@ public:
 private:
     void timerCallback() override;
 
-    GraphiteProcessor& processor;
+    DrawEQProcessor& processor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Console)
 };
 
-} // namespace graphite
+} // namespace draweq

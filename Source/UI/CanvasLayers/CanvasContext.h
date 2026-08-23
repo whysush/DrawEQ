@@ -5,7 +5,7 @@
 #include "../../DSP/CurveWorker.h"
 #include "../Theme.h"
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -88,4 +88,4 @@ inline juce::String noteNameFor (float hz)
     return juce::String (names[((note % 12) + 12) % 12]) + juce::String (octave);
 }
 
-} // namespace graphite
+} // namespace draweq

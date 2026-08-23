@@ -7,10 +7,10 @@
 #include "Controls/ToolButton.h"
 #include "CurveCanvas.h"
 
-namespace graphite
+namespace draweq
 {
 
-class GraphiteProcessor;
+class DrawEQProcessor;
 
 /**
     A dark instrument face: a thin title strip, settings down the right, two
@@ -21,12 +21,12 @@ class GraphiteProcessor;
     panel needs two short rows along the bottom where it would otherwise need a
     column down each side.
 */
-class GraphiteEditor final : public juce::AudioProcessorEditor,
+class DrawEQEditor final : public juce::AudioProcessorEditor,
                              private juce::Timer
 {
 public:
-    explicit GraphiteEditor (GraphiteProcessor&);
-    ~GraphiteEditor() override;
+    explicit DrawEQEditor (DrawEQProcessor&);
+    ~DrawEQEditor() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -39,8 +39,8 @@ private:
     void toggleAnalyser();
     int  analyserChoice() const;
 
-    GraphiteProcessor& processor;
-    GraphiteLookAndFeel lookAndFeel;
+    DrawEQProcessor& processor;
+    DrawEQLookAndFeel lookAndFeel;
 
     CurveCanvas canvas;
     SlotStrip   slots;
@@ -72,7 +72,7 @@ private:
 
     int lastAnalyserChoice = 3;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GraphiteEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DrawEQEditor)
 };
 
-} // namespace graphite
+} // namespace draweq

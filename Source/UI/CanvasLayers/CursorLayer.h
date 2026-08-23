@@ -1,7 +1,7 @@
 #pragma once
 #include "CanvasContext.h"
 
-namespace graphite
+namespace draweq
 {
 /** Crosshair and readout, plus the permanent fit-quality line. */
 struct CursorLayer

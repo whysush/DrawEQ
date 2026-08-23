@@ -5,7 +5,7 @@
 #include <array>
 #include <cmath>
 
-namespace graphite
+namespace draweq
 {
 
 enum class BandType : int
@@ -299,4 +299,4 @@ struct BandEval
 };
 
 } // namespace response
-} // namespace graphite
+} // namespace draweq

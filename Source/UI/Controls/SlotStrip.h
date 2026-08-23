@@ -2,10 +2,10 @@
 
 #include "LookAndFeel.h"
 
-namespace graphite
+namespace draweq
 {
 
-class GraphiteProcessor;
+class DrawEQProcessor;
 
 /**
     The eight preset slots, across the top of the window.
@@ -19,7 +19,7 @@ class SlotStrip final : public juce::Component,
                         private juce::Timer
 {
 public:
-    explicit SlotStrip (GraphiteProcessor&);
+    explicit SlotStrip (DrawEQProcessor&);
     ~SlotStrip() override;
 
     void paint (juce::Graphics&) override;
@@ -33,11 +33,11 @@ private:
     int slotAt (juce::Point<float>) const;
     juce::Rectangle<float> boundsForSlot (int) const;
 
-    GraphiteProcessor& processor;
+    DrawEQProcessor& processor;
     int hovered = -1;
     int focused = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SlotStrip)
 };
 
-} // namespace graphite
+} // namespace draweq

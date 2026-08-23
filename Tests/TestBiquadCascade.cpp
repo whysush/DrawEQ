@@ -5,7 +5,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <vector>
 
-using namespace graphite;
+using namespace draweq;
 using Catch::Matchers::WithinAbs;
 
 namespace

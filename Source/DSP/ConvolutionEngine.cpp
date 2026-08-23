@@ -3,7 +3,7 @@
 #include <cstring>
 #include <numeric>
 
-namespace graphite
+namespace draweq
 {
 
 static int nextPow2 (int v)
@@ -216,4 +216,4 @@ void ConvolutionEngine::process (const float* in, float* outA, float* outB, int 
     fifoCount -= numSamples;
 }
 
-} // namespace graphite
+} // namespace draweq

@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstring>
 
-namespace graphite
+namespace draweq
 {
 
 PresetBank::PresetBank()
@@ -133,4 +133,4 @@ bool PresetBank::deserialise (const std::uint8_t* data, std::size_t size)
     return true;
 }
 
-} // namespace graphite
+} // namespace draweq

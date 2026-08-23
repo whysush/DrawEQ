@@ -36,8 +36,8 @@ if (NOT eigen_POPULATED)
     FetchContent_Populate (eigen)
 endif ()
 
-add_library (graphite_eigen INTERFACE)
+add_library (draweq_eigen INTERFACE)
 # SYSTEM, so that our own -Werror-grade warning set does not fire on headers
 # we do not control.
-target_include_directories (graphite_eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
+target_include_directories (draweq_eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
 

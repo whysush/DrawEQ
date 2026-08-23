@@ -1,7 +1,7 @@
 #include "ToolButton.h"
 #include "ToolIcons.h"
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -144,4 +144,4 @@ void ToolButton::paintButton (juce::Graphics& g, bool highlighted, bool down)
     }
 }
 
-} // namespace graphite
+} // namespace draweq

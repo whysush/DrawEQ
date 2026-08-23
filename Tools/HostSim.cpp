@@ -12,7 +12,7 @@
     change mid-playback, state surviving a save and reload, several instances at
     once, and a window being opened and closed repeatedly.
 
-        GraphiteHostSim <path-to.vst3>
+        DrawEQHostSim <path-to.vst3>
 */
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -94,7 +94,7 @@ int main (int argc, char** argv)
 
     if (argc < 2)
     {
-        std::fprintf (stderr, "usage: GraphiteHostSim <path-to.vst3>\n");
+        std::fprintf (stderr, "usage: DrawEQHostSim <path-to.vst3>\n");
         return 2;
     }
 

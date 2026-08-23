@@ -4,7 +4,7 @@
 #include "../../DSP/BandResponse.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace graphite
+namespace draweq
 {
 
 enum class Tool
@@ -33,4 +33,4 @@ CurveModel::Brush brushFor (Tool);
 void curveFromBands (const Band* bands, int numBands, float trimDb, double sampleRate,
                      CurveArray& out);
 
-} // namespace graphite
+} // namespace draweq

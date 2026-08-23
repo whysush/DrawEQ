@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -57,4 +57,4 @@ private:
     std::array<Slot, kSlots> slots {};
 };
 
-} // namespace graphite
+} // namespace draweq

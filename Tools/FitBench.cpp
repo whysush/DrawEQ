@@ -6,7 +6,7 @@
     the fitter actually help", which the unit tests deliberately cannot: they
     assert thresholds, and a threshold tells you nothing about the margin.
 
-        GraphiteFitBench [bandCount]
+        DrawEQFitBench [bandCount]
 */
 
 #include "../Source/Core/CurveShaping.h"
@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-using namespace graphite;
+using namespace draweq;
 
 namespace
 {

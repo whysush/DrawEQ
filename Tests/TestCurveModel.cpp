@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-using namespace graphite;
+using namespace draweq;
 using Catch::Matchers::WithinAbs;
 
 TEST_CASE ("a fresh model is flat", "[curve]")

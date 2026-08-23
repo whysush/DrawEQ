@@ -1,6 +1,6 @@
 #include "Fader.h"
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -250,4 +250,4 @@ void Fader::paint (juce::Graphics& g)
     }
 }
 
-} // namespace graphite
+} // namespace draweq

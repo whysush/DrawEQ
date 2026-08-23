@@ -7,7 +7,7 @@
 #include <cmath>
 #include <numeric>
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -557,4 +557,4 @@ const CurveFitter::Result& CurveFitter::fit (const CurveArray& target, Effort ef
     return result;
 }
 
-} // namespace graphite
+} // namespace draweq

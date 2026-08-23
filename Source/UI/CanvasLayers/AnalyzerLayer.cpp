@@ -1,6 +1,6 @@
 #include "AnalyzerLayer.h"
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -74,4 +74,4 @@ void AnalyzerLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     g.strokePath (buildPath (ctx.analyzer->preDb(), ctx, false), juce::PathStrokeType (1.0f));
 }
 
-} // namespace graphite
+} // namespace draweq

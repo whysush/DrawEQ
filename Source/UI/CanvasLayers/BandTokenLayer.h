@@ -1,7 +1,7 @@
 #pragma once
 #include "CanvasContext.h"
 
-namespace graphite
+namespace draweq
 {
 /** Draggable band handles, Analog mode only. */
 struct BandTokenLayer

@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -72,4 +72,4 @@ private:
     std::atomic<int> underrunCount { 0 };
 };
 
-} // namespace graphite
+} // namespace draweq

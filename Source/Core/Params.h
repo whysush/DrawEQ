@@ -2,7 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-namespace graphite::params
+namespace draweq::params
 {
 
 /**
@@ -32,4 +32,4 @@ enum class AnalyzerMode { off = 0, pre, post, both };
 
 juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
 
-} // namespace graphite::params
+} // namespace draweq::params

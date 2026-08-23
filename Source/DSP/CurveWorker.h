@@ -13,7 +13,7 @@
 #include <mutex>
 #include <thread>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -170,4 +170,4 @@ private:
     std::atomic<bool> running { false };
 };
 
-} // namespace graphite
+} // namespace draweq

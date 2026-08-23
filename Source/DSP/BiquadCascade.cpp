@@ -1,7 +1,7 @@
 #include "BiquadCascade.h"
 #include <algorithm>
 
-namespace graphite
+namespace draweq
 {
 
 void BiquadCascade::prepare (double sampleRate, int numChannels)
@@ -165,4 +165,4 @@ float BiquadCascade::magnitudeDb (float hz) const noexcept
     return response::cascadeDb (smoothed.data(), kMaxBands, hz, sr);
 }
 
-} // namespace graphite
+} // namespace draweq

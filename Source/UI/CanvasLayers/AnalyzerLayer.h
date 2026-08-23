@@ -1,7 +1,7 @@
 #pragma once
 #include "CanvasContext.h"
 
-namespace graphite
+namespace draweq
 {
 /** Pre and post spectra, behind everything, deliberately recessive. */
 struct AnalyzerLayer

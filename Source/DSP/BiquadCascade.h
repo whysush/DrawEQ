@@ -4,7 +4,7 @@
 #include "Smoothers.h"
 #include <array>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -73,4 +73,4 @@ private:
     std::array<OnePole, kMaxBands> smoothLogF {}, smoothGain {}, smoothLogQ {};
 };
 
-} // namespace graphite
+} // namespace draweq

@@ -1,6 +1,6 @@
 #include "DrawTools.h"
 
-namespace graphite
+namespace draweq
 {
 
 const char* toolName (Tool t)
@@ -72,4 +72,4 @@ void curveFromBands (const Band* bands, int numBands, float trimDb, double sampl
     }
 }
 
-} // namespace graphite
+} // namespace draweq

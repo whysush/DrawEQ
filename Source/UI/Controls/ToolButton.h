@@ -3,7 +3,7 @@
 #include "../Theme.h"
 #include "../Tools/DrawTools.h"
 
-namespace graphite
+namespace draweq
 {
 
 /** One tool in the bottom bar: a vector glyph in a bordered cell, lit when the
@@ -26,4 +26,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ToolButton)
 };
 
-} // namespace graphite
+} // namespace draweq

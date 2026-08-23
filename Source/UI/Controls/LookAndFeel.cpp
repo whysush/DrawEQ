@@ -1,9 +1,9 @@
 #include "LookAndFeel.h"
 
-namespace graphite
+namespace draweq
 {
 
-GraphiteLookAndFeel::GraphiteLookAndFeel()
+DrawEQLookAndFeel::DrawEQLookAndFeel()
 {
     setColour (juce::Label::textColourId,          Theme::Colour::of (Theme::Colour::textHi));
     setColour (juce::TextButton::buttonColourId,   Theme::Colour::of (Theme::Colour::raised));
@@ -20,7 +20,7 @@ GraphiteLookAndFeel::GraphiteLookAndFeel()
     setColour (juce::PopupMenu::highlightedTextColourId, Theme::Colour::of (Theme::Colour::textHi));
 }
 
-void GraphiteLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b,
+void DrawEQLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b,
                                                 const juce::Colour&, bool highlighted, bool down)
 {
     const auto bounds = b.getLocalBounds();
@@ -42,7 +42,7 @@ void GraphiteLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button&
     }
 }
 
-void GraphiteLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b,
+void DrawEQLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b,
                                           bool highlighted, bool)
 {
     juce::ignoreUnused (highlighted);
@@ -52,7 +52,7 @@ void GraphiteLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b
                              juce::Justification::centred);
 }
 
-void GraphiteLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height, bool,
+void DrawEQLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height, bool,
                                         int, int, int, int, juce::ComboBox& box)
 {
     auto bounds = juce::Rectangle<int> (0, 0, width, height);
@@ -79,25 +79,25 @@ void GraphiteLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height
         g.fillRect (cx - 3 + row, cy - 2 + row, 7 - row * 2, 1);
 }
 
-void GraphiteLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)
+void DrawEQLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)
 {
     label.setBounds (6, 0, box.getWidth() - 22, box.getHeight());
     label.setFont (getComboBoxFont (box));
 }
 
-juce::Font GraphiteLookAndFeel::getComboBoxFont (juce::ComboBox&)
+juce::Font DrawEQLookAndFeel::getComboBoxFont (juce::ComboBox&)
 {
     return Theme::labelFont (Theme::Metrics::labelSize);
 }
 
-juce::Font GraphiteLookAndFeel::getPopupMenuFont()
+juce::Font DrawEQLookAndFeel::getPopupMenuFont()
 {
     return Theme::labelFont (Theme::Metrics::bodySize);
 }
 
-juce::Font GraphiteLookAndFeel::getLabelFont (juce::Label&)
+juce::Font DrawEQLookAndFeel::getLabelFont (juce::Label&)
 {
     return Theme::monoFont (Theme::Metrics::smallSize);
 }
 
-} // namespace graphite
+} // namespace draweq

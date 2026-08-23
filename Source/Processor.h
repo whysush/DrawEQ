@@ -13,7 +13,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -24,12 +24,12 @@ namespace graphite
     The processor never builds a filter. It receives one, crossfades to it, and
     hands the old one back.
 */
-class GraphiteProcessor final : public juce::AudioProcessor,
+class DrawEQProcessor final : public juce::AudioProcessor,
                                 private juce::Timer
 {
 public:
-    GraphiteProcessor();
-    ~GraphiteProcessor() override;
+    DrawEQProcessor();
+    ~DrawEQProcessor() override;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -49,7 +49,7 @@ public:
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
 
-    const juce::String getName() const override { return "GRAPHITE"; }
+    const juce::String getName() const override { return "DrawEQ"; }
     bool acceptsMidi() const override  { return false; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
@@ -164,7 +164,7 @@ private:
 
     int lastMorphA = 1, lastMorphB = 2;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GraphiteProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DrawEQProcessor)
 };
 
-} // namespace graphite
+} // namespace draweq

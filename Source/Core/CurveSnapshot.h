@@ -4,7 +4,7 @@
 #include <array>
 #include <cstdint>
 
-namespace graphite
+namespace draweq
 {
 
 using CurveArray = std::array<float, LogGrid::kSize>;
@@ -44,4 +44,4 @@ struct CurveSnapshot
     double sampleRate = 48000.0;
 };
 
-} // namespace graphite
+} // namespace draweq

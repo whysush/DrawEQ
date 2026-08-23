@@ -3,7 +3,7 @@
 
 #include <juce_core/juce_core.h>
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -29,11 +29,11 @@ namespace
     }
 }
 
-GraphiteProcessor::GraphiteProcessor()
+DrawEQProcessor::DrawEQProcessor()
     : AudioProcessor (BusesProperties()
                           .withInput ("Input", juce::AudioChannelSet::stereo(), true)
                           .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "GRAPHITE", params::createLayout())
+      apvts (*this, nullptr, "DrawEQ", params::createLayout())
 {
     pBypass   = apvts.getRawParameterValue (params::id::bypass);
     pMode     = apvts.getRawParameterValue (params::id::mode);
@@ -55,13 +55,13 @@ GraphiteProcessor::GraphiteProcessor()
     curveWorker.setSource (&model);
 }
 
-GraphiteProcessor::~GraphiteProcessor()
+DrawEQProcessor::~DrawEQProcessor()
 {
     stopTimer();
     curveWorker.stop();
 }
 
-bool GraphiteProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool DrawEQProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
     const auto& out = layouts.getMainOutputChannelSet();
 
@@ -71,14 +71,14 @@ bool GraphiteProcessor::isBusesLayoutSupported (const BusesLayout& layouts) cons
     return layouts.getMainInputChannelSet() == out;
 }
 
-double GraphiteProcessor::getTailLengthSeconds() const
+double DrawEQProcessor::getTailLengthSeconds() const
 {
     // Spectral mode's tail is the IR; Analog's is the ring-down of its lowest
     // band. Reporting the longer of the two is honest in either mode.
     return double (IRBuilder::irLengthFor (sr)) / sr;
 }
 
-void GraphiteProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void DrawEQProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     sr       = sampleRate;
     maxBlock = juce::jmax (16, samplesPerBlock);
@@ -142,7 +142,7 @@ void GraphiteProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     startTimerHz (20);
 }
 
-void GraphiteProcessor::releaseResources()
+void DrawEQProcessor::releaseResources()
 {
     stopTimer();
     curveWorker.stop();
@@ -153,7 +153,7 @@ void GraphiteProcessor::releaseResources()
 // Message thread
 // ---------------------------------------------------------------------------
 
-void GraphiteProcessor::pushMacrosToWorker()
+void DrawEQProcessor::pushMacrosToWorker()
 {
     curveWorker.setMacros (pTilt->load(), pSmooth->load(), pShift->load(),
                            int (pBands->load()), Mode (int (pMode->load())));
@@ -161,7 +161,7 @@ void GraphiteProcessor::pushMacrosToWorker()
     curveWorker.setLiveFit (pLive->load() > 0.5f);
 }
 
-void GraphiteProcessor::timerCallback()
+void DrawEQProcessor::timerCallback()
 {
     pushMacrosToWorker();
 
@@ -200,7 +200,7 @@ void GraphiteProcessor::timerCallback()
     }
 }
 
-void GraphiteProcessor::applyShape (shapes::Shape shape)
+void DrawEQProcessor::applyShape (shapes::Shape shape)
 {
     CurveArray c;
     shapes::build (shape, sr > 0.0 ? sr : 48000.0, c);
@@ -210,7 +210,7 @@ void GraphiteProcessor::applyShape (shapes::Shape shape)
     curveWorker.requestDeepFit();
 }
 
-void GraphiteProcessor::storeCurrentIntoSlot (int slot)
+void DrawEQProcessor::storeCurrentIntoSlot (int slot)
 {
     presets.store (slot - 1, model.getCurve(), pTilt->load(), pSmooth->load(), pShift->load());
 
@@ -218,7 +218,7 @@ void GraphiteProcessor::storeCurrentIntoSlot (int slot)
         curveWorker.setMorphTarget (presets.curveFor (slot - 1));
 }
 
-void GraphiteProcessor::recallSlot (int slot)
+void DrawEQProcessor::recallSlot (int slot)
 {
     CurveArray c {};
     float tilt = 0.0f, smooth = 0.0f, shift = 0.0f;
@@ -234,7 +234,7 @@ void GraphiteProcessor::recallSlot (int slot)
     curveWorker.requestDeepFit();
 }
 
-void GraphiteProcessor::clearSlot (int slot)
+void DrawEQProcessor::clearSlot (int slot)
 {
     presets.clear (slot - 1);
 
@@ -246,7 +246,7 @@ void GraphiteProcessor::clearSlot (int slot)
 // Audio thread
 // ---------------------------------------------------------------------------
 
-void GraphiteProcessor::adoptState (FilterState* incoming) noexcept
+void DrawEQProcessor::adoptState (FilterState* incoming) noexcept
 {
     if (incoming == nullptr)
         return;
@@ -313,7 +313,7 @@ void GraphiteProcessor::adoptState (FilterState* incoming) noexcept
     fadeSamplesLeft  = fadeSamplesTotal;
 }
 
-void GraphiteProcessor::renderAnalog (juce::AudioBuffer<float>& buffer, int numSamples) noexcept
+void DrawEQProcessor::renderAnalog (juce::AudioBuffer<float>& buffer, int numSamples) noexcept
 {
     float* channels[kMaxChannels] {};
     const int nch = juce::jmin (buffer.getNumChannels(), kMaxChannels);
@@ -330,7 +330,7 @@ void GraphiteProcessor::renderAnalog (juce::AudioBuffer<float>& buffer, int numS
         juce::FloatVectorOperations::multiply (channels[ch], trim, numSamples);
 }
 
-void GraphiteProcessor::renderSpectral (juce::AudioBuffer<float>& buffer, int numSamples,
+void DrawEQProcessor::renderSpectral (juce::AudioBuffer<float>& buffer, int numSamples,
                                         const float* irA, const float* irB,
                                         float* const* destA, float* const* destB) noexcept
 {
@@ -341,7 +341,7 @@ void GraphiteProcessor::renderSpectral (juce::AudioBuffer<float>& buffer, int nu
                                            destA[ch], destB[ch], numSamples, irA, irB);
 }
 
-void GraphiteProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+void DrawEQProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     const juce::ScopedNoDenormals noDenormals;
 
@@ -522,7 +522,7 @@ void GraphiteProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
 // State
 // ---------------------------------------------------------------------------
 
-void GraphiteProcessor::getStateInformation (juce::MemoryBlock& destination)
+void DrawEQProcessor::getStateInformation (juce::MemoryBlock& destination)
 {
     auto state = apvts.copyState();
     auto xml = state.createXml();
@@ -546,7 +546,7 @@ void GraphiteProcessor::getStateInformation (juce::MemoryBlock& destination)
     copyXmlToBinary (*xml, destination);
 }
 
-void GraphiteProcessor::setStateInformation (const void* data, int sizeInBytes)
+void DrawEQProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     auto xml = getXmlFromBinary (data, sizeInBytes);
 
@@ -586,14 +586,14 @@ void GraphiteProcessor::setStateInformation (const void* data, int sizeInBytes)
     }
 }
 
-juce::AudioProcessorEditor* GraphiteProcessor::createEditor()
+juce::AudioProcessorEditor* DrawEQProcessor::createEditor()
 {
-    return new GraphiteEditor (*this);
+    return new DrawEQEditor (*this);
 }
 
-} // namespace graphite
+} // namespace draweq
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new graphite::GraphiteProcessor();
+    return new draweq::DrawEQProcessor();
 }

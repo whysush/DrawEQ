@@ -2,7 +2,7 @@
 #include "../Core/CurveShaping.h"
 #include <chrono>
 
-namespace graphite
+namespace draweq
 {
 
 CurveWorker::CurveWorker() = default;
@@ -294,4 +294,4 @@ void CurveWorker::buildAnalog (FilterState& state, const CurveArray& t, CurveFit
     ui.rmsErrorDb = r.rmsErrorDb;
 }
 
-} // namespace graphite
+} // namespace draweq

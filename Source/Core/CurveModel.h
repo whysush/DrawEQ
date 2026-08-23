@@ -7,7 +7,7 @@
 #include <mutex>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -140,4 +140,4 @@ private:
     std::atomic<std::uint64_t> gesturesCompleted { 0 };
 };
 
-} // namespace graphite
+} // namespace draweq

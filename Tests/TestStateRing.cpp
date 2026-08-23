@@ -4,7 +4,7 @@
 #include <thread>
 #include <vector>
 
-using namespace graphite;
+using namespace draweq;
 
 namespace
 {

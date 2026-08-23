@@ -2,7 +2,7 @@
 
 #include "CurveSnapshot.h"
 
-namespace graphite::shapes
+namespace draweq::shapes
 {
 
 /**
@@ -36,4 +36,4 @@ const char* name (Shape);
     filter uses. */
 void build (Shape, double sampleRate, CurveArray& out);
 
-} // namespace graphite::shapes
+} // namespace draweq::shapes

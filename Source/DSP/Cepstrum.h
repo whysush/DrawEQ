@@ -4,7 +4,7 @@
 #include <complex>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -37,4 +37,4 @@ private:
     std::vector<std::complex<float>> a, b;
 };
 
-} // namespace graphite
+} // namespace draweq

@@ -50,12 +50,12 @@ jobs:
         shell: bash
         run: |
           VST3=$(find build -name "*.vst3" | head -1)
-          find build -name "GraphiteHostSim*" -type f -perm -u+x -exec {} "$VST3" \;
+          find build -name "DrawEQHostSim*" -type f -perm -u+x -exec {} "$VST3" \;
 
       - name: Fit benchmark
         shell: bash
         run: |
-          find build -name "GraphiteFitBench*" -type f -perm -u+x -exec {} 24 \;
+          find build -name "DrawEQFitBench*" -type f -perm -u+x -exec {} 24 \;
 
       - name: Fetch pluginval
         shell: bash
@@ -84,5 +84,5 @@ jobs:
       - name: Upload VST3
         uses: actions/upload-artifact@v4
         with:
-          name: GRAPHITE-${{ matrix.name }}
-          path: build/Graphite_artefacts/RelWithDebInfo/VST3
+          name: DrawEQ-${{ matrix.name }}
+          path: build/DrawEQ_artefacts/RelWithDebInfo/VST3

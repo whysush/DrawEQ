@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -55,4 +55,4 @@ private:
     float value = 0.0f;
 };
 
-} // namespace graphite
+} // namespace draweq

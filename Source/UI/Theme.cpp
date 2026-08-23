@@ -1,11 +1,11 @@
 #include "Theme.h"
 #include "../Core/LogGrid.h"
 
-#if GRAPHITE_HAS_EMBEDDED_FONTS
+#if DRAWEQ_HAS_EMBEDDED_FONTS
  #include "BinaryData.h"
 #endif
 
-namespace graphite::Theme
+namespace draweq::Theme
 {
 
 namespace
@@ -28,7 +28,7 @@ namespace
 
 void loadFonts()
 {
-   #if GRAPHITE_HAS_EMBEDDED_FONTS
+   #if DRAWEQ_HAS_EMBEDDED_FONTS
     if (grotesk == nullptr)
         grotesk = juce::Typeface::createSystemTypefaceFor (BinaryData::SpaceGroteskMedium_ttf,
                                                            BinaryData::SpaceGroteskMedium_ttfSize);
@@ -131,4 +131,4 @@ juce::Colour bandColour (float frequencyHz)
     return juce::Colour (stops[std::size (stops) - 1].argb);
 }
 
-} // namespace graphite::Theme
+} // namespace draweq::Theme

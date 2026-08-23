@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -128,4 +128,4 @@ private:
     std::vector<T*> freeList;   // worker thread only
 };
 
-} // namespace graphite
+} // namespace draweq

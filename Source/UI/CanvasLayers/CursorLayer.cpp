@@ -1,6 +1,6 @@
 #include "CursorLayer.h"
 
-namespace graphite
+namespace draweq
 {
 
 void CursorLayer::paint (juce::Graphics& g, const CanvasContext& ctx, juce::Point<float> mouse,
@@ -79,4 +79,4 @@ void CursorLayer::paintErrorReadout (juce::Graphics& g, const CanvasContext& ctx
                 juce::Justification::centredLeft);
 }
 
-} // namespace graphite
+} // namespace draweq

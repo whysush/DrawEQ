@@ -2,7 +2,7 @@
 
 #include "LookAndFeel.h"
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -59,4 +59,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Fader)
 };
 
-} // namespace graphite
+} // namespace draweq

@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -90,4 +90,4 @@ private:
     std::atomic<bool> preEnabled { true }, postEnabled { true };
 };
 
-} // namespace graphite
+} // namespace draweq

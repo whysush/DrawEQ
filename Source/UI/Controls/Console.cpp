@@ -1,10 +1,10 @@
 #include "Console.h"
 #include "../../Processor.h"
 
-namespace graphite
+namespace draweq
 {
 
-Console::Console (GraphiteProcessor& p)
+Console::Console (DrawEQProcessor& p)
     : processor (p)
 {
     startTimerHz (4);   // status, not telemetry: four a second is plenty
@@ -61,4 +61,4 @@ void Console::paint (juce::Graphics& g)
     g.drawText (text, getLocalBounds(), juce::Justification::centredRight);
 }
 
-} // namespace graphite
+} // namespace draweq

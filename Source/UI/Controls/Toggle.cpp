@@ -1,6 +1,6 @@
 #include "Toggle.h"
 
-namespace graphite
+namespace draweq
 {
 
 Toggle::Toggle (juce::AudioProcessorValueTreeState& s, const juce::String& parameterID,
@@ -61,4 +61,4 @@ void Toggle::resized()
     button.setBounds (getLocalBounds());
 }
 
-} // namespace graphite
+} // namespace draweq

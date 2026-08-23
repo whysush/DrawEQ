@@ -4,10 +4,10 @@
 #include "CanvasLayers/CanvasContext.h"
 #include "Tools/DrawTools.h"
 
-namespace graphite
+namespace draweq
 {
 
-class GraphiteProcessor;
+class DrawEQProcessor;
 
 /**
     The drawing surface: every layer, every tool, every gesture.
@@ -20,7 +20,7 @@ class CurveCanvas final : public juce::Component,
                           private juce::Timer
 {
 public:
-    explicit CurveCanvas (GraphiteProcessor&);
+    explicit CurveCanvas (DrawEQProcessor&);
     ~CurveCanvas() override;
 
     void paint (juce::Graphics&) override;
@@ -61,7 +61,7 @@ private:
     void dragBand (const juce::MouseEvent&);
     void commitBands();
 
-    GraphiteProcessor& processor;
+    DrawEQProcessor& processor;
     CurveWorker::UiSnapshot ui;
     CurveArray liveTarget {}, rawCurve {};
 
@@ -90,4 +90,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CurveCanvas)
 };
 
-} // namespace graphite
+} // namespace draweq

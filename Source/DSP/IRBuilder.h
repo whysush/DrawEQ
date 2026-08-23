@@ -5,7 +5,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -55,4 +55,4 @@ private:
     std::vector<float> scratch;                   // N real
 };
 
-} // namespace graphite
+} // namespace draweq

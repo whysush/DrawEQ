@@ -5,7 +5,7 @@
 #include "DSP/CurveWorker.h"
 #include <random>
 
-using namespace graphite;
+using namespace draweq;
 
 namespace
 {

@@ -6,7 +6,7 @@
     rather not have a plugin connect itself to. It exists so that a change to
     the interface can be looked at, and diffed, without loading a host.
 
-        GraphiteUISnapshot <output.png> [demo|flat]
+        DrawEQUISnapshot <output.png> [demo|flat]
 */
 
 #include "../Source/Processor.h"
@@ -19,20 +19,20 @@ namespace
 /** A stroke with something to say: a low bump, a midrange scoop, an air lift.
     `withNotch` adds one gesture too narrow for any biquad cascade, which is
     what gives the residual ribbon something to show. */
-void drawDemoCurve (graphite::CurveModel& model, bool withNotch)
+void drawDemoCurve (draweq::CurveModel& model, bool withNotch)
 {
     model.beginGesture();
     model.startStroke (20.0f, 0.0f);
-    model.strokeTo (55.0f,   7.5f, 0.55f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (110.0f,  4.0f, 0.55f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (260.0f, -2.0f, 0.55f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (520.0f, -8.0f, 0.45f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (900.0f, -9.5f, 0.45f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (1800.0f, -3.0f, 0.5f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (3600.0f,  2.5f, 0.5f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (7000.0f,  6.0f, 0.5f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (14000.0f, 8.0f, 0.6f, 1.0f, graphite::CurveModel::Brush::draw);
-    model.strokeTo (20000.0f, 7.0f, 0.6f, 1.0f, graphite::CurveModel::Brush::draw);
+    model.strokeTo (55.0f,   7.5f, 0.55f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (110.0f,  4.0f, 0.55f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (260.0f, -2.0f, 0.55f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (520.0f, -8.0f, 0.45f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (900.0f, -9.5f, 0.45f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (1800.0f, -3.0f, 0.5f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (3600.0f,  2.5f, 0.5f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (7000.0f,  6.0f, 0.5f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (14000.0f, 8.0f, 0.6f, 1.0f, draweq::CurveModel::Brush::draw);
+    model.strokeTo (20000.0f, 7.0f, 0.6f, 1.0f, draweq::CurveModel::Brush::draw);
     model.endGesture();
 
     if (! withNotch)
@@ -42,7 +42,7 @@ void drawDemoCurve (graphite::CurveModel& model, bool withNotch)
     model.startStroke (2600.0f, 0.0f);
 
     for (int i = 0; i < 12; ++i)
-        model.strokeTo (2600.0f, -22.0f, 0.06f, 1.0f, graphite::CurveModel::Brush::draw);
+        model.strokeTo (2600.0f, -22.0f, 0.06f, 1.0f, draweq::CurveModel::Brush::draw);
 
     model.endGesture();
 }
@@ -52,12 +52,12 @@ int main (int argc, char** argv)
 {
     const juce::ScopedJuceInitialiser_GUI juceInit;
 
-    const juce::String outputPath = argc > 1 ? argv[1] : "graphite-ui.png";
+    const juce::String outputPath = argc > 1 ? argv[1] : "draweq-ui.png";
     const juce::String which = argc > 2 ? argv[2] : "demo";
     const bool demo   = which != "flat";
     const bool ribbon = which == "ribbon";
 
-    graphite::GraphiteProcessor processor;
+    draweq::DrawEQProcessor processor;
     processor.prepareToPlay (48000.0, 128);
 
     if (demo)
@@ -75,10 +75,10 @@ int main (int argc, char** argv)
 
     const bool small = which == "small";
 
-    editor->setSize (small ? int (graphite::Theme::Metrics::defaultWidth * 0.75)
-                           : graphite::Theme::Metrics::defaultWidth,
-                     small ? int (graphite::Theme::Metrics::defaultHeight * 0.75)
-                           : graphite::Theme::Metrics::defaultHeight);
+    editor->setSize (small ? int (draweq::Theme::Metrics::defaultWidth * 0.75)
+                           : draweq::Theme::Metrics::defaultWidth,
+                     small ? int (draweq::Theme::Metrics::defaultHeight * 0.75)
+                           : draweq::Theme::Metrics::defaultHeight);
 
     // Let the worker fit the curve and the canvas timer pick the result up;
     // without this the plot line has nothing to draw yet.

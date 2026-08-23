@@ -2,7 +2,7 @@
 
 #include "LookAndFeel.h"
 
-namespace graphite
+namespace draweq
 {
 
 /** A latching text button bound to a bool or choice parameter. Tab-reachable,
@@ -35,4 +35,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Toggle)
 };
 
-} // namespace graphite
+} // namespace draweq

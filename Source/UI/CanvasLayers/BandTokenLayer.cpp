@@ -1,6 +1,6 @@
 #include "BandTokenLayer.h"
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -115,4 +115,4 @@ void BandTokenLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     }
 }
 
-} // namespace graphite
+} // namespace draweq

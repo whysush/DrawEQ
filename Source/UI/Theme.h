@@ -2,7 +2,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace graphite::Theme
+namespace draweq::Theme
 {
 
 /**
@@ -148,4 +148,4 @@ void drawPixelBevel (juce::Graphics&, juce::Rectangle<int>, bool raised);
 /** Registers the bundled typefaces. Called once by the editor. */
 void loadFonts();
 
-} // namespace graphite::Theme
+} // namespace draweq::Theme

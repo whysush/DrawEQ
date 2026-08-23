@@ -1,6 +1,6 @@
 #include "GraticuleLayer.h"
 
-namespace graphite
+namespace draweq
 {
 
 void GraticuleLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
@@ -83,4 +83,4 @@ void GraticuleLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     }
 }
 
-} // namespace graphite
+} // namespace draweq

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace graphite
+namespace draweq
 {
 
 static int nextPow2 (int v)
@@ -154,4 +154,4 @@ void IRBuilder::magnitudeResponse (const float* ir, int length, CurveArray& outD
     }
 }
 
-} // namespace graphite
+} // namespace draweq

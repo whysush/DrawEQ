@@ -6,7 +6,7 @@
 #include "Core/Shapes.h"
 #include <chrono>
 
-using namespace graphite;
+using namespace draweq;
 using Catch::Matchers::WithinAbs;
 
 namespace

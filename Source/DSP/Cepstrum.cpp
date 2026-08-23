@@ -1,7 +1,7 @@
 #include "Cepstrum.h"
 #include <cmath>
 
-namespace graphite
+namespace draweq
 {
 
 void MinimumPhase::prepare (int fftOrder)
@@ -62,4 +62,4 @@ void MinimumPhase::computeImpulse (const float* magnitude, float* impulseOut)
         impulseOut[i] = b[size_t (i)].real();
 }
 
-} // namespace graphite
+} // namespace draweq

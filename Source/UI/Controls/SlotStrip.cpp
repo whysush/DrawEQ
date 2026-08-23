@@ -1,10 +1,10 @@
 #include "SlotStrip.h"
 #include "../../Processor.h"
 
-namespace graphite
+namespace draweq
 {
 
-SlotStrip::SlotStrip (GraphiteProcessor& p)
+SlotStrip::SlotStrip (DrawEQProcessor& p)
     : processor (p)
 {
     setWantsKeyboardFocus (true);
@@ -152,4 +152,4 @@ bool SlotStrip::keyPressed (const juce::KeyPress& key)
     return false;
 }
 
-} // namespace graphite
+} // namespace draweq

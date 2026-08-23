@@ -1,4 +1,4 @@
-# GRAPHITE — Drawable EQ
+# DrawEQ — Drawable EQ
 
 You draw the frequency response you want, and the plugin works out how to be it.
 
@@ -40,7 +40,7 @@ sudo apt-get install libasound2-dev libx11-dev libxext-dev libxrandr-dev \
   libfontconfig1-dev libgl1-mesa-dev
 ```
 
-Outputs land in `build/Graphite_artefacts/` — a VST3 and a standalone.
+Outputs land in `build/DrawEQ_artefacts/` — a VST3 and a standalone.
 
 ## Testing
 
@@ -68,7 +68,7 @@ is involved and they run anywhere. What they cover:
 Validation, as CONTEXT.md 11 requires:
 
 ```bash
-pluginval --strictness-level 10 --validate build/.../GRAPHITE.vst3
+pluginval --strictness-level 10 --validate build/.../DrawEQ.vst3
 ```
 
 ## Tools
@@ -80,15 +80,15 @@ Neither is shipped; both exist to answer questions the tests cannot.
 # DAW does: odd buffer lengths, the sample rate changing under it, a latency
 # change mid-playback, state across a save/reload, four instances at once,
 # bypass, and a window opened and closed repeatedly.
-./build/GraphiteHostSim_artefacts/*/GraphiteHostSim \
-    build/Graphite_artefacts/*/VST3/GRAPHITE.vst3
+./build/DrawEQHostSim_artefacts/*/DrawEQHostSim \
+    build/DrawEQ_artefacts/*/VST3/DrawEQ.vst3
 
 # Fit quality and timing across a corpus - "did that change actually help?"
-./build/GraphiteFitBench_artefacts/*/GraphiteFitBench 24
+./build/DrawEQFitBench_artefacts/*/DrawEQFitBench 24
 
 # Render the editor to a PNG with no window and no audio device.
 # modes: demo | ribbon | flat
-./build/GraphiteUISnapshot_artefacts/*/GraphiteUISnapshot out.png ribbon
+./build/DrawEQSnapshot_artefacts/*/DrawEQSnapshot out.png ribbon
 ```
 
 ## Using it

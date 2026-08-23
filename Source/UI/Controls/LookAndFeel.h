@@ -3,7 +3,7 @@
 #include "../Theme.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -15,10 +15,10 @@ namespace graphite
     edge is square and lands on a whole pixel - the only depth in the panel
     comes from the plate being darker than the face it sits in.
 */
-class GraphiteLookAndFeel final : public juce::LookAndFeel_V4
+class DrawEQLookAndFeel final : public juce::LookAndFeel_V4
 {
 public:
-    GraphiteLookAndFeel();
+    DrawEQLookAndFeel();
 
     void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&,
                                bool highlighted, bool down) override;
@@ -37,4 +37,4 @@ public:
     juce::Font getLabelFont (juce::Label&) override;
 };
 
-} // namespace graphite
+} // namespace draweq

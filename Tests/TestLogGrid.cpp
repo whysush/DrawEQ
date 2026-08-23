@@ -4,7 +4,7 @@
 #include "Core/LogGrid.h"
 #include "Core/CurveShaping.h"
 
-using namespace graphite;
+using namespace draweq;
 using Catch::Matchers::WithinAbs;
 using Catch::Matchers::WithinRel;
 

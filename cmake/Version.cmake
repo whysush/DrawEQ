@@ -1,8 +1,8 @@
 # Single source of truth for the plugin's identity and version.
-# Bumping GRAPHITE_VERSION here flows into the VST3 metadata and the About readout.
+# Bumping DRAWEQ_VERSION here flows into the VST3 metadata.
 
-set (GRAPHITE_VERSION       0.9.0)
-set (GRAPHITE_COMPANY       "Graphite Audio")
-set (GRAPHITE_COMPANY_CODE  Grph)   # 4 chars, must be unique per vendor
-set (GRAPHITE_PLUGIN_CODE   Grft)   # 4 chars, must be unique per plugin
-set (GRAPHITE_BUNDLE_ID     com.graphiteaudio.graphite)
+set (DRAWEQ_VERSION       0.9.0)
+set (DRAWEQ_COMPANY       "Bludwinder")
+set (DRAWEQ_COMPANY_CODE  Bldw)   # 4 chars, must be unique per vendor
+set (DRAWEQ_PLUGIN_CODE   Drwq)   # 4 chars, must be unique per plugin
+set (DRAWEQ_BUNDLE_ID     com.bludwinder.draweq)

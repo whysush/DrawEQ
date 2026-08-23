@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -197,4 +197,4 @@ void Analyzer::update (float secondsSinceLast)
              postEnabled.load (std::memory_order_relaxed));
 }
 
-} // namespace graphite
+} // namespace draweq

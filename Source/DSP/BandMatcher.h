@@ -3,7 +3,7 @@
 #include "BandResponse.h"
 #include <array>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -32,4 +32,4 @@ private:
     bool have = false;
 };
 
-} // namespace graphite
+} // namespace draweq

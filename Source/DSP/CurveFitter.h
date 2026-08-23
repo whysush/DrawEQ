@@ -5,7 +5,7 @@
 #include <array>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -106,4 +106,4 @@ private:
     Result result;
 };
 
-} // namespace graphite
+} // namespace draweq

@@ -1,6 +1,6 @@
 #include "Checkbox.h"
 
-namespace graphite
+namespace draweq
 {
 
 class Checkbox::Box final : public juce::Button
@@ -56,4 +56,4 @@ void Checkbox::resized()
     box->setBounds (getLocalBounds());
 }
 
-} // namespace graphite
+} // namespace draweq

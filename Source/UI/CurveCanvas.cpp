@@ -6,10 +6,10 @@
 #include "CanvasLayers/GraticuleLayer.h"
 #include "../Core/CurveShaping.h"
 
-namespace graphite
+namespace draweq
 {
 
-CurveCanvas::CurveCanvas (GraphiteProcessor& p)
+CurveCanvas::CurveCanvas (DrawEQProcessor& p)
     : processor (p)
 {
     setWantsKeyboardFocus (true);
@@ -403,4 +403,4 @@ bool CurveCanvas::keyPressed (const juce::KeyPress& key)
     return false;
 }
 
-} // namespace graphite
+} // namespace draweq

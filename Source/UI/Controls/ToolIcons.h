@@ -2,7 +2,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace graphite::icons
+namespace draweq::icons
 {
 
 /**
@@ -26,7 +26,7 @@ namespace graphite::icons
     a half-width profile swept along a 45 degree axis:
 
         t = 0.00   half width 0        the point
-        t = 0.17   half width 0.062    graphite meets wood
+        t = 0.17   half width 0.062    draweq meets wood
         t = 0.33   half width 0.140    the shoulder reaches full barrel
         t = 1.00   half width 0.140    the flat end
 
@@ -70,7 +70,7 @@ namespace detail
     };
 }
 
-/** The full outline: point, graphite flank, shoulder, barrel, flat end. */
+/** The full outline: point, draweq flank, shoulder, barrel, flat end. */
 inline juce::Path pencil()
 {
     using A = detail::PencilAxis;
@@ -87,7 +87,7 @@ inline juce::Path pencil()
     return p;
 }
 
-/** The exposed graphite: the cone from the point to the wood line. Filled, so
+/** The exposed draweq: the cone from the point to the wood line. Filled, so
     the business end is unmistakably the business end. */
 inline juce::Path pencilTip()
 {
@@ -230,4 +230,4 @@ inline juce::Path nodeHandleCore()
     return p;
 }
 
-} // namespace graphite::icons
+} // namespace draweq::icons

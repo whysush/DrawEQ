@@ -2,7 +2,7 @@
 
 #include "LookAndFeel.h"
 
-namespace graphite
+namespace draweq
 {
 
 /** `[x] INVERT` - a square, a mark, a tracked label. Tab-reachable and
@@ -24,4 +24,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Checkbox)
 };
 
-} // namespace graphite
+} // namespace draweq

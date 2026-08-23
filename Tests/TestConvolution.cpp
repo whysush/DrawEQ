@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-using namespace graphite;
+using namespace draweq;
 using Catch::Matchers::WithinAbs;
 
 namespace

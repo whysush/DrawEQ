@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -69,4 +69,4 @@ struct LogGrid
     static float gainToDb (float g)  noexcept { return 20.0f * std::log10 (std::max (g, 1.0e-9f)); }
 };
 
-} // namespace graphite
+} // namespace draweq

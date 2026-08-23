@@ -2,7 +2,7 @@
 #include "../Core/Shapes.h"
 #include "../Processor.h"
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -26,7 +26,7 @@ namespace
     }
 }
 
-GraphiteEditor::GraphiteEditor (GraphiteProcessor& p)
+DrawEQEditor::DrawEQEditor (DrawEQProcessor& p)
     : AudioProcessorEditor (&p),
       processor (p),
       canvas (p),
@@ -169,13 +169,13 @@ GraphiteEditor::GraphiteEditor (GraphiteProcessor& p)
     canvas.grabKeyboardFocus();
 }
 
-GraphiteEditor::~GraphiteEditor()
+DrawEQEditor::~DrawEQEditor()
 {
     stopTimer();
     setLookAndFeel (nullptr);
 }
 
-int GraphiteEditor::analyserChoice() const
+int DrawEQEditor::analyserChoice() const
 {
     if (auto* v = processor.apvts.getRawParameterValue (params::id::analyzer))
         return int (v->load());
@@ -183,7 +183,7 @@ int GraphiteEditor::analyserChoice() const
     return 0;
 }
 
-void GraphiteEditor::toggleAnalyser()
+void DrawEQEditor::toggleAnalyser()
 {
     auto* p = processor.apvts.getParameter (params::id::analyzer);
 
@@ -201,7 +201,7 @@ void GraphiteEditor::toggleAnalyser()
     p->endChangeGesture();
 }
 
-void GraphiteEditor::refreshBandColumn()
+void DrawEQEditor::refreshBandColumn()
 {
     Band band;
     const bool have = canvas.selectedBand (band);
@@ -228,7 +228,7 @@ void GraphiteEditor::refreshBandColumn()
     repaint (bandArea);
 }
 
-void GraphiteEditor::pushBandEdit()
+void DrawEQEditor::pushBandEdit()
 {
     if (suppressBandCallback)
         return;
@@ -238,7 +238,7 @@ void GraphiteEditor::pushBandEdit()
                                float (bandQ.getValue()));
 }
 
-void GraphiteEditor::timerCallback()
+void DrawEQEditor::timerCallback()
 {
     analyseButton.setToggleState (analyserChoice() != 0, juce::dontSendNotification);
 
@@ -264,13 +264,13 @@ void GraphiteEditor::timerCallback()
     repaint (bottomStrip);
 }
 
-void GraphiteEditor::refreshToolButtons()
+void DrawEQEditor::refreshToolButtons()
 {
     for (std::size_t i = 0; i < toolButtons.size(); ++i)
         toolButtons[i]->setToggleState (canvas.tool() == kTools[i], juce::dontSendNotification);
 }
 
-void GraphiteEditor::paint (juce::Graphics& g)
+void DrawEQEditor::paint (juce::Graphics& g)
 {
     g.fillAll (Theme::Colour::of (Theme::Colour::background));
 
@@ -293,7 +293,7 @@ void GraphiteEditor::paint (juce::Graphics& g)
         Theme::drawPixelBevel (g, lamp, true);
 
         area.removeFromLeft (18);
-        Theme::drawTrackedLabel (g, "Graphite", area.removeFromLeft (122),
+        Theme::drawTrackedLabel (g, "DrawEQ", area.removeFromLeft (100),
                                  Theme::Colour::of (Theme::Colour::titleText),
                                  juce::Justification::centredLeft,
                                  Theme::Metrics::titleSize, 0.10f);
@@ -301,7 +301,7 @@ void GraphiteEditor::paint (juce::Graphics& g)
         // drawTrackedLabel upper-cases whatever it is given, so the credit sits
         // at the same weight as every other label on the panel without needing
         // to shout.
-        Theme::drawTrackedLabel (g, "(Developed by Bludwinder)", area.removeFromLeft (218),
+        Theme::drawTrackedLabel (g, "by Bludwinder", area.removeFromLeft (124),
                                  Theme::Colour::of (Theme::Colour::textMid),
                                  juce::Justification::centredLeft);
 
@@ -373,13 +373,13 @@ void GraphiteEditor::paint (juce::Graphics& g)
     }
 }
 
-void GraphiteEditor::resized()
+void DrawEQEditor::resized()
 {
     auto bounds = getLocalBounds();
     captions.clear();
 
     titleArea = bounds.removeFromTop (Theme::Metrics::titleBarHeight);
-    status.setBounds (titleArea.reduced (10, 0).withTrimmedLeft (472));
+    status.setBounds (titleArea.reduced (10, 0).withTrimmedLeft (368));
 
     // --- one row along the bottom: tools, slots, the selected band, error ---
     bottomStrip = bounds.removeFromBottom (Theme::Metrics::bottomStripHeight);
@@ -459,4 +459,4 @@ void GraphiteEditor::resized()
     canvas.setBounds (plateArea.reduced (1));
 }
 
-} // namespace graphite
+} // namespace draweq

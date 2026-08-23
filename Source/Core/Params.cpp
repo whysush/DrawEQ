@@ -1,6 +1,6 @@
 #include "Params.h"
 
-namespace graphite::params
+namespace draweq::params
 {
 
 using juce::AudioParameterBool;
@@ -92,4 +92,4 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     return layout;
 }
 
-} // namespace graphite::params
+} // namespace draweq::params

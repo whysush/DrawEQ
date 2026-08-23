@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace graphite
+namespace draweq
 {
 
 void BandMatcher::match (Band* bands, int numBells, int numBands) noexcept
@@ -86,4 +86,4 @@ void BandMatcher::match (Band* bands, int numBells, int numBands) noexcept
         previous[std::size_t (i)] = bands[i];
 }
 
-} // namespace graphite
+} // namespace draweq

@@ -4,7 +4,7 @@
 #include "DSP/IRBuilder.h"
 #include "DSP/BandResponse.h"
 
-using namespace graphite;
+using namespace draweq;
 using Catch::Matchers::WithinAbs;
 
 namespace

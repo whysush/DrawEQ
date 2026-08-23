@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstring>
 
-namespace graphite
+namespace draweq
 {
 
 CurveModel::CurveModel()
@@ -428,4 +428,4 @@ bool CurveModel::deserialise (const std::uint8_t* data, std::size_t size)
     return true;
 }
 
-} // namespace graphite
+} // namespace draweq

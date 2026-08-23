@@ -3,7 +3,7 @@
 #include "CurveSnapshot.h"
 #include <cmath>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -121,4 +121,4 @@ inline void applyMacros (const CurveSnapshot& s, CurveArray& out)
 }
 
 } // namespace shaping
-} // namespace graphite
+} // namespace draweq

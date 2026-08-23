@@ -166,7 +166,7 @@ Worth revisiting against a newer JUCE before Linux becomes a real target.
 
 ## Measured performance
 
-From `GraphiteFitBench` and the timing assertions in `TestCurveFitter`, on a
+From `DrawEQFitBench` and the timing assertions in `TestCurveFitter`, on a
 12-core desktop at 48 kHz. CONTEXT.md 10 asks for these to be stated rather than
 quietly shipped past.
 
@@ -470,7 +470,7 @@ phosphor terminal recorded above is gone. What replaced it:
   using to the plot.
 
 **A new control came with the layout.** The reference devotes its left column to
-the selected band's frequency, gain and Q, and GRAPHITE already had the Node
+the selected band's frequency, gain and Q, and DrawEQ already had the Node
 tool for grabbing bands - so clicking a band with it now fills that column, and
 typing into it writes back through exactly the path a drag takes. A number typed
 and a token dragged cannot disagree, because they are the same code.
@@ -583,7 +583,7 @@ hole in the middle of the row.
 The unit tests exercise the DSP classes directly. That leaves the VST3 boundary
 untested - the factory, bus negotiation, the parameter interface, the state
 blob - which is exactly where "our code works" and "the plugin works in a DAW"
-come apart. `GraphiteHostSim` loads the built `.vst3` through JUCE's own VST3
+come apart. `DrawEQHostSim` loads the built `.vst3` through JUCE's own VST3
 host and drives it the way a channel insert is driven: odd buffer lengths, the
 sample rate changing underneath, a latency change mid-playback, state across a
 save and reload, four instances at once, bypass, and a window opened and closed

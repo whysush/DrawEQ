@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace graphite
+namespace draweq
 {
 
 /**
@@ -50,4 +50,4 @@ struct FilterState
     }
 };
 
-} // namespace graphite
+} // namespace draweq

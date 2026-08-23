@@ -6,7 +6,7 @@
 #include <array>
 #include <numeric>
 
-using namespace graphite;
+using namespace draweq;
 
 namespace
 {

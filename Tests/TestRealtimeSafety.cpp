@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <new>
 
-using namespace graphite;
+using namespace draweq;
 
 // ---------------------------------------------------------------------------
 // A global allocation trap.

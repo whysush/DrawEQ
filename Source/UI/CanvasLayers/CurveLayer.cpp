@@ -1,6 +1,6 @@
 #include "CurveLayer.h"
 
-namespace graphite
+namespace draweq
 {
 
 namespace
@@ -131,4 +131,4 @@ void CurveLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     g.strokePath (achieved, juce::PathStrokeType (2.0f));
 }
 
-} // namespace graphite
+} // namespace draweq
