@@ -44,6 +44,14 @@ jobs:
       - name: Unit tests
         run: ctest --test-dir build --output-on-failure
 
+      # Exercises the VST3 boundary rather than the DSP classes: bus
+      # negotiation, the parameter interface, the state blob, latency changes.
+      - name: Host simulation
+        shell: bash
+        run: |
+          VST3=$(find build -name "*.vst3" | head -1)
+          find build -name "GraphiteHostSim*" -type f -perm -u+x -exec {} "$VST3" \;
+
       - name: Fit benchmark
         shell: bash
         run: |

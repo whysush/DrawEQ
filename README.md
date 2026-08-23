@@ -76,6 +76,13 @@ pluginval --strictness-level 10 --validate build/.../GRAPHITE.vst3
 Neither is shipped; both exist to answer questions the tests cannot.
 
 ```bash
+# Loads the built VST3 through JUCE's own VST3 host and drives it the way a
+# DAW does: odd buffer lengths, the sample rate changing under it, a latency
+# change mid-playback, state across a save/reload, four instances at once,
+# bypass, and a window opened and closed repeatedly.
+./build/GraphiteHostSim_artefacts/*/GraphiteHostSim \
+    build/Graphite_artefacts/*/VST3/GRAPHITE.vst3
+
 # Fit quality and timing across a corpus - "did that change actually help?"
 ./build/GraphiteFitBench_artefacts/*/GraphiteFitBench 24
 

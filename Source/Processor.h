@@ -37,6 +37,15 @@ public:
     using juce::AudioProcessor::processBlock;   // the double-precision overload stays default
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
+    /** Hands the host our own bypass rather than letting the wrapper synthesise
+        one.
+
+        Without this a VST3 host sees two bypass controls - ours and JUCE's -
+        and its own bypass button drives the synthetic one, which cuts hard
+        instead of going through the 20 ms ramp and the latency-compensated dry
+        path. One control, and the host's button does the right thing. */
+    juce::AudioProcessorParameter* getBypassParameter() const override { return bypassParameter; }
+
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
 
@@ -115,7 +124,14 @@ private:
     std::array<std::vector<float>, kMaxChannels> dryDelay;
     int dryDelayWrite = 0, dryDelayMask = 0;
 
-    OnePole trimSmoother, gainSmoother, mixSmoother, bypassSmoother;
+    OnePole trimSmoother, gainSmoother, mixSmoother;
+
+    // Bypass ramps linearly rather than exponentially. An exponential approach
+    // is fine for a gain, but a bypass has to actually arrive: at 20 ms and a
+    // one-pole it was still letting through half a percent of the processed
+    // signal, which is not what "bypassed" means.
+    float bypassRamp = 0.0f;
+    float bypassStep = 1.0f;
 
     double sr = 48000.0;
     int    maxBlock = 512;
@@ -143,6 +159,8 @@ private:
     std::atomic<float>* pAnalyzer = nullptr;
     std::atomic<float>* pInvert = nullptr;
     std::atomic<float>* pLive = nullptr;
+
+    juce::AudioProcessorParameter* bypassParameter = nullptr;
 
     int lastMorphA = 1, lastMorphB = 2;
 

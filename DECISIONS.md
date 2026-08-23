@@ -575,3 +575,51 @@ actually left, so spare room never collects as a gap above the bottom of a
 column. The bottom row sizes the band section first and lets the slot strip take
 the remainder, so widening the window widens the slots rather than opening a
 hole in the middle of the row.
+
+---
+
+## Host simulation, and the two things it found
+
+The unit tests exercise the DSP classes directly. That leaves the VST3 boundary
+untested - the factory, bus negotiation, the parameter interface, the state
+blob - which is exactly where "our code works" and "the plugin works in a DAW"
+come apart. `GraphiteHostSim` loads the built `.vst3` through JUCE's own VST3
+host and drives it the way a channel insert is driven: odd buffer lengths, the
+sample rate changing underneath, a latency change mid-playback, state across a
+save and reload, four instances at once, bypass, and a window opened and closed
+five times.
+
+It found two real defects that nothing else had.
+
+**The plugin exposed two bypass controls.** `AudioProcessor::getBypassParameter`
+was never overridden, so JUCE's VST3 wrapper synthesised its own alongside the
+one in the APVTS. A host's bypass button drove the synthetic one, which cuts
+hard - no 20 ms ramp, no latency-compensated dry path. Overriding it hands the
+host ours, and there is one control that does the right thing.
+
+**The bypass ramp oscillated forever.** Written as
+
+    ramp += (target > ramp ? +step : -step)
+
+it steps *down* the moment it arrives, because `1.0 > 1.0` is false. Then up,
+then down, at the step rate, for as long as the plugin is bypassed. The effect
+was a permanent ~1e-3 of the processed signal leaking through a bypassed plugin,
+dithered at around a kilohertz. Moving toward the target and stopping on it
+takes the bypass null from 9.4e-4 to **3.0e-8**, which is float rounding on the
+mix arithmetic and nothing else.
+
+Both are the kind of fault that survives every DSP test - the filter was never
+wrong - and would have been found by a user toggling bypass and hearing
+something.
+
+`OnePole` also learned to settle. An exponential approach never arrives, so a
+smoother that had "finished" still sat a fraction short of its target
+indefinitely; it now lands once the remaining distance is inaudible, which makes
+a finished gain exactly one and keeps settled smoothers from feeding denormals
+into what they drive.
+
+**What this still does not prove.** It is JUCE hosting JUCE. It cannot catch
+something specific to FL Studio's wrapper - its plugin window handling, its
+delay compensation around a mode change, or how it treats a resizable editor
+with a fixed aspect ratio. Loading it in FL remains the outstanding test, and it
+is the first thing to do on a Windows machine.

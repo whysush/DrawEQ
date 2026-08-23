@@ -158,6 +158,27 @@ target_link_libraries (GraphiteUISnapshot PRIVATE
     juce::juce_recommended_config_flags
     juce::juce_recommended_warning_flags)
 
+# Loads the built VST3 through JUCE's own VST3 host and drives it the way a
+# DAW would. Needs the plugin built first.
+juce_add_console_app (GraphiteHostSim)
+
+target_sources (GraphiteHostSim PRIVATE Tools/HostSim.cpp)
+
+target_compile_definitions (GraphiteHostSim PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_STANDALONE_APPLICATION=1
+    JUCE_MODAL_LOOPS_PERMITTED=1
+    JUCE_PLUGINHOST_VST3=1
+    JUCE_REPORT_APP_USAGE=0)
+
+target_link_libraries (GraphiteHostSim PRIVATE
+    juce::juce_audio_utils
+    juce::juce_audio_processors
+    juce::juce_gui_basics
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags)
+
 juce_add_console_app (GraphiteFitBench)
 
 target_sources (GraphiteFitBench PRIVATE Tools/FitBench.cpp ${GRAPHITE_DSP_SOURCES})

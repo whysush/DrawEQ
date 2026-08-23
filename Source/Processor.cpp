@@ -50,6 +50,8 @@ GraphiteProcessor::GraphiteProcessor()
     pInvert   = apvts.getRawParameterValue (params::id::phaseInvert);
     pLive     = apvts.getRawParameterValue (params::id::liveFit);
 
+    bypassParameter = apvts.getParameter (params::id::bypass);
+
     curveWorker.setSource (&model);
 }
 
@@ -113,11 +115,12 @@ void GraphiteProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     trimSmoother.prepare (sampleRate, 20.0f);
     gainSmoother.prepare (sampleRate, 20.0f);
     mixSmoother.prepare (sampleRate, 20.0f);
-    bypassSmoother.prepare (sampleRate, 20.0f);
     trimSmoother.snap (0.0f);
     gainSmoother.snap (1.0f);
     mixSmoother.snap (1.0f);
-    bypassSmoother.snap (0.0f);
+
+    bypassRamp = pBypass->load() > 0.5f ? 1.0f : 0.0f;
+    bypassStep = float (1.0 / juce::jmax (1.0, 0.020 * sampleRate));
 
     active = fading = nullptr;
     fadeSamplesLeft = fadeSamplesTotal = 0;
@@ -474,9 +477,20 @@ void GraphiteProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
 
     for (int n = 0; n < numSamples; ++n)
     {
-        const float mix    = mixSmoother.process (mixTarget);
-        const float gain   = gainSmoother.process (gainTarget);
-        const float bypass = bypassSmoother.process (bypassTarget);
+        const float mix  = mixSmoother.process (mixTarget);
+        const float gain = gainSmoother.process (gainTarget);
+
+        // Move toward the target and stop on it. Stepping unconditionally in
+        // whichever direction the comparison last favoured makes the ramp
+        // oscillate by one step once it arrives - which left a permanent
+        // thousandth of the processed signal leaking through a bypassed
+        // plugin, and dithered it at the step rate.
+        if (bypassTarget > bypassRamp)
+            bypassRamp = juce::jmin (bypassTarget, bypassRamp + bypassStep);
+        else if (bypassTarget < bypassRamp)
+            bypassRamp = juce::jmax (bypassTarget, bypassRamp - bypassStep);
+
+        const float bypass = bypassRamp;
 
         for (int ch = 0; ch < nch; ++ch)
         {

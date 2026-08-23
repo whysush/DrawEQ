@@ -26,19 +26,31 @@ public:
     {
         const float a = std::pow (coeff, float (numSamples));
         value = target + a * (value - target);
-        return value;
+        return settle (target);
     }
 
     float process (float target) noexcept
     {
         value = target + coeff * (value - target);
-        return value;
+        return settle (target);
     }
 
     void snap (float v) noexcept { value = v; }
     float get() const noexcept   { return value; }
 
 private:
+    /** An exponential approach never arrives. Landing it once the remaining
+        distance is inaudible means a ramp that has finished has *finished* -
+        a gain of exactly one, not 0.9999 - and it keeps a settled smoother
+        from feeding denormals into whatever it drives. */
+    float settle (float target) noexcept
+    {
+        if (std::abs (value - target) < 1.0e-6f)
+            value = target;
+
+        return value;
+    }
+
     float coeff = 0.0f;
     float value = 0.0f;
 };
