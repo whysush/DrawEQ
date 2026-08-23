@@ -293,12 +293,19 @@ void GraphiteEditor::paint (juce::Graphics& g)
         Theme::drawPixelBevel (g, lamp, true);
 
         area.removeFromLeft (18);
-        Theme::drawTrackedLabel (g, "Graphite", area.removeFromLeft (128),
+        Theme::drawTrackedLabel (g, "Graphite", area.removeFromLeft (122),
                                  Theme::Colour::of (Theme::Colour::titleText),
                                  juce::Justification::centredLeft,
                                  Theme::Metrics::titleSize, 0.10f);
 
-        Theme::drawTrackedLabel (g, "Drawable EQ", area.removeFromLeft (110),
+        // drawTrackedLabel upper-cases whatever it is given, so the credit sits
+        // at the same weight as every other label on the panel without needing
+        // to shout.
+        Theme::drawTrackedLabel (g, "(Developed by Bludwinder)", area.removeFromLeft (218),
+                                 Theme::Colour::of (Theme::Colour::textMid),
+                                 juce::Justification::centredLeft);
+
+        Theme::drawTrackedLabel (g, "Drawable EQ", area.removeFromLeft (104),
                                  Theme::Colour::of (Theme::Colour::textLo),
                                  juce::Justification::centredLeft);
     }
@@ -372,7 +379,7 @@ void GraphiteEditor::resized()
     captions.clear();
 
     titleArea = bounds.removeFromTop (Theme::Metrics::titleBarHeight);
-    status.setBounds (titleArea.reduced (10, 0).withTrimmedLeft (260));
+    status.setBounds (titleArea.reduced (10, 0).withTrimmedLeft (472));
 
     // --- one row along the bottom: tools, slots, the selected band, error ---
     bottomStrip = bounds.removeFromBottom (Theme::Metrics::bottomStripHeight);

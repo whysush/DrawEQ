@@ -73,8 +73,12 @@ int main (int argc, char** argv)
         return 1;
     }
 
-    editor->setSize (graphite::Theme::Metrics::defaultWidth,
-                     graphite::Theme::Metrics::defaultHeight);
+    const bool small = which == "small";
+
+    editor->setSize (small ? int (graphite::Theme::Metrics::defaultWidth * 0.75)
+                           : graphite::Theme::Metrics::defaultWidth,
+                     small ? int (graphite::Theme::Metrics::defaultHeight * 0.75)
+                           : graphite::Theme::Metrics::defaultHeight);
 
     // Let the worker fit the curve and the canvas timer pick the result up;
     // without this the plot line has nothing to draw yet.
