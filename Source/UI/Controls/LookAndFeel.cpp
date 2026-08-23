@@ -23,7 +23,7 @@ GraphiteLookAndFeel::GraphiteLookAndFeel()
 void GraphiteLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b,
                                                 const juce::Colour&, bool highlighted, bool down)
 {
-    const auto bounds = b.getLocalBounds().toFloat().reduced (0.5f);
+    const auto bounds = b.getLocalBounds();
     const bool on = b.getToggleState();
 
     g.setColour (Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::raised)
@@ -31,13 +31,14 @@ void GraphiteLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button&
                      .darker (down ? 0.10f : 0.0f));
     g.fillRect (bounds);
 
-    g.setColour (Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.7f));
-    g.drawRect (bounds, 1.0f);
+    // Pressed reads as recessed rather than merely darker, which is the one
+    // piece of feedback a flat panel otherwise has no way to give.
+    Theme::drawPixelBevel (g, bounds, ! down);
 
     if (b.hasKeyboardFocus (false))
     {
         g.setColour (Theme::Colour::of (Theme::Colour::focus));
-        g.drawRect (bounds, Theme::Metrics::focusRing);
+        g.drawRect (bounds, int (Theme::Metrics::focusRing));
     }
 }
 
@@ -54,27 +55,28 @@ void GraphiteLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b
 void GraphiteLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height, bool,
                                         int, int, int, int, juce::ComboBox& box)
 {
-    auto bounds = juce::Rectangle<int> (0, 0, width, height).toFloat().reduced (0.5f);
+    auto bounds = juce::Rectangle<int> (0, 0, width, height);
 
     g.setColour (Theme::Colour::of (Theme::Colour::raised));
     g.fillRect (bounds);
-    g.setColour (Theme::Colour::of (box.hasKeyboardFocus (false) ? Theme::Colour::focus
-                                                                 : Theme::Colour::recessed));
-    g.drawRect (bounds, 1.0f);
+    Theme::drawPixelBevel (g, bounds, true);
 
-    // Drawn rather than typed: a triangle glyph is exactly the sort of
-    // character a bundled face may not carry, and a missing one renders as tofu.
-    const auto cell = bounds.removeFromRight (16.0f);
-    const auto c = cell.getCentre();
+    if (box.hasKeyboardFocus (false))
+    {
+        g.setColour (Theme::Colour::of (Theme::Colour::focus));
+        g.drawRect (bounds, int (Theme::Metrics::focusRing));
+    }
 
-    juce::Path caret;
-    caret.startNewSubPath (c.x - 3.5f, c.y - 2.0f);
-    caret.lineTo (c.x + 3.5f, c.y - 2.0f);
-    caret.lineTo (c.x, c.y + 2.5f);
-    caret.closeSubPath();
+    // Stepped rather than drawn as a triangle path: a stack of shortening rows
+    // is a caret that lands on whole pixels, and a glyph would depend on a face
+    // that may not carry it.
+    const auto cell = bounds.removeFromRight (18);
+    const int cx = cell.getCentreX(), cy = cell.getCentreY();
 
     g.setColour (Theme::Colour::of (Theme::Colour::textHi));
-    g.fillPath (caret);
+
+    for (int row = 0; row < 4; ++row)
+        g.fillRect (cx - 3 + row, cy - 2 + row, 7 - row * 2, 1);
 }
 
 void GraphiteLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)

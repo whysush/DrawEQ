@@ -84,6 +84,23 @@ void drawTrackedLabel (juce::Graphics& g, const juce::String& text, juce::Rectan
     arrangement.draw (g, juce::AffineTransform::translation (x, y));
 }
 
+void drawPixelBevel (juce::Graphics& g, juce::Rectangle<int> r, bool raised)
+{
+    if (r.getWidth() < 2 || r.getHeight() < 2)
+        return;
+
+    const auto light = Colour::of (raised ? Colour::bevelLight : Colour::bevelDark);
+    const auto dark  = Colour::of (raised ? Colour::bevelDark : Colour::bevelLight);
+
+    g.setColour (light);
+    g.fillRect (r.getX(), r.getY(), r.getWidth() - 1, 1);
+    g.fillRect (r.getX(), r.getY(), 1, r.getHeight() - 1);
+
+    g.setColour (dark);
+    g.fillRect (r.getX(), r.getBottom() - 1, r.getWidth(), 1);
+    g.fillRect (r.getRight() - 1, r.getY(), 1, r.getHeight());
+}
+
 juce::Colour bandColour (float frequencyHz)
 {
     // Stops along one brightness path, placed on the same log axis the canvas

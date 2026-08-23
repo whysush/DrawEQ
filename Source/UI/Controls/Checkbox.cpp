@@ -14,7 +14,7 @@ public:
 
     void paintButton (juce::Graphics& g, bool highlighted, bool down) override
     {
-        const auto bounds = getLocalBounds().toFloat().reduced (0.5f);
+        const auto bounds = getLocalBounds();
         const bool on = getToggleState();
 
         // Amber when on, grey when off - the same statement every other switch
@@ -24,8 +24,7 @@ public:
                          .darker (down ? 0.10f : 0.0f));
         g.fillRect (bounds);
 
-        g.setColour (Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.7f));
-        g.drawRect (bounds, 1.0f);
+        Theme::drawPixelBevel (g, bounds, ! on);
 
         Theme::drawTrackedLabel (g, getButtonText(), getLocalBounds(),
                                  Theme::Colour::of (on ? Theme::Colour::textHi
@@ -35,7 +34,7 @@ public:
         if (hasKeyboardFocus (false))
         {
             g.setColour (Theme::Colour::of (Theme::Colour::focus));
-            g.drawRect (bounds, Theme::Metrics::focusRing);
+            g.drawRect (bounds, int (Theme::Metrics::focusRing));
         }
     }
 };

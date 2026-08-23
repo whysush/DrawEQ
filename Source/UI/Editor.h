@@ -2,7 +2,7 @@
 
 #include "Controls/Checkbox.h"
 #include "Controls/Console.h"
-#include "Controls/BarControl.h"
+#include "Controls/Fader.h"
 #include "Controls/SlotStrip.h"
 #include "Controls/ToolButton.h"
 #include "CurveCanvas.h"
@@ -17,9 +17,9 @@ class GraphiteProcessor;
     rows of controls along the bottom, and the plot plate taking everything
     left over.
 
-    Every control is the same segmented bar, which is most of what makes this
-    fit in 880 by 400: a bar is a fifth the height of a dial, so the panel needs
-    two short rows where it used to need a column down each side.
+    Every control is the same fader, so nothing has to be learned twice and the
+    panel needs two short rows along the bottom where it would otherwise need a
+    column down each side.
 */
 class GraphiteEditor final : public juce::AudioProcessorEditor,
                              private juce::Timer
@@ -47,9 +47,9 @@ private:
     Console     status;
 
     // Whichever band the Node tool has hold of, edited numerically.
-    BarControl bandFreq { "Freq", { 20.0, 20000.0 }, 0.1, "Hz", 34 };
-    BarControl bandGain { "Gain", { -30.0, 30.0 }, 0.01, "dB", 34 };
-    BarControl bandQ    { "Q",    { 0.1, 18.0 }, 0.01, "", 34 };
+    Fader bandFreq { "Freq", { 20.0, 20000.0 }, 0.1, "Hz", 34 };
+    Fader bandGain { "Gain", { -30.0, 30.0 }, 0.01, "dB", 34 };
+    Fader bandQ    { "Q",    { 0.1, 18.0 }, 0.01, "", 34 };
     bool suppressBandCallback = false;
 
     std::array<std::unique_ptr<ToolButton>, 5> toolButtons;
@@ -58,7 +58,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment,
                                                                            analyserAttachment;
 
-    BarControl bands, mix, output, tilt, smooth, shift, morph;
+    Fader bands, mix, output, tilt, smooth, shift, morph;
     Checkbox   invert, bypass, live;
     juce::TextButton analyseButton { "Analyse" };
 

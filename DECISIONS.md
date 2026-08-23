@@ -529,3 +529,49 @@ which the caption and number took 82, leaving a seven-cell bar. Widening the
 column and narrowing the number to 32 px fixed it. Worth recording because the
 failure mode is specific to counted bars: a poured bar degrades gracefully into
 a thin line, a counted one stops being a bar at all.
+
+---
+
+## Faders, and where the character came from
+
+Two complaints: the panel looked plain and unlike an EQ, and the controls were
+progress bars rather than anything you would find on a desk.
+
+**A progress bar is not a fader, and the difference is not cosmetic.** A filled
+bar answers *how much*; a capped fader answers *where*. For a tilt or a shift -
+values that live either side of a centre - *where* is the question actually
+being asked, and a bar has no way to point at it. `BarControl` became `Fader`: a
+recessed slot with ticks along it, a taller cap running in it with a grip line
+down its middle, a raised centre tick where a console fader has its detent
+moulded in, and the travelled part of the slot lit so it still says how much as
+well as where.
+
+One detail worth keeping: the cap's centre can only reach half a cap-width from
+each end, so the slot is inset to match. Without that the travel and the drawing
+disagree and the cap looks like it stops short of the ends.
+
+**The character came from one pixel.** Not from ornament: `drawPixelBevel` puts
+a single light pixel along the top and left of anything raised and a single dark
+one along the bottom and right, and reverses it for anything recessed. That is
+the entire depth model - no gradients, no blurs, nothing that would blur across
+a pixel boundary. It is the look the tracker software this kind of plugin grew
+out of had, and it costs two `fillRect` calls.
+
+Applied consistently it does a lot of work for free: a pressed button is
+genuinely recessed rather than merely darker, the selected tool sits pressed
+into the panel the way a latched hardware button does, the plate is recessed
+into the face, and the strips are raised out of it. The combo caret is drawn as
+a stack of shortening rows for the same reason - a triangle path would
+antialias, and a glyph would depend on a face that may not carry it.
+
+**Everything grew and tightened at once.** 880x400 became 1100x560 with type up
+roughly 20 % - and the panel is *fuller*, not emptier, because the layout was
+reorganised rather than scaled. The four macros moved out of a second bottom row
+into the right column, which had a void under it, and the bottom went from two
+rows to one. The plate took the difference.
+
+The column now sizes its switches first and lets the faders divide what is
+actually left, so spare room never collects as a gap above the bottom of a
+column. The bottom row sizes the band section first and lets the slot strip take
+the remainder, so widening the window widens the slots rather than opening a
+hole in the middle of the row.

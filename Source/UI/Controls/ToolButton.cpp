@@ -114,25 +114,33 @@ void ToolButton::drawIcon (juce::Graphics& g, Tool tool, juce::Rectangle<float> 
 
 void ToolButton::paintButton (juce::Graphics& g, bool highlighted, bool down)
 {
-    const auto bounds = getLocalBounds().toFloat().reduced (0.5f);
+    const auto bounds = getLocalBounds();
     const bool on = getToggleState();
 
-    g.setColour (Theme::Colour::of (on ? Theme::Colour::raised : Theme::Colour::recessed)
+    g.setColour (Theme::Colour::of (on ? Theme::Colour::raised : Theme::Colour::panel)
                      .brighter (highlighted ? 0.10f : 0.0f)
                      .darker (down ? 0.12f : 0.0f));
     g.fillRect (bounds);
 
-    g.setColour (Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::hairline));
-    g.drawRect (bounds, 1.0f);
+    // The selected tool sits pressed into the panel, the way a latched button
+    // on a hardware front panel does.
+    Theme::drawPixelBevel (g, bounds, ! on && ! down);
 
-    drawIcon (g, tool, bounds.reduced (bounds.getWidth() * 0.14f),
+    if (on)
+    {
+        g.setColour (Theme::Colour::of (Theme::Colour::accent));
+        g.fillRect (bounds.getX() + 1, bounds.getBottom() - 3, bounds.getWidth() - 2, 2);
+    }
+
+    drawIcon (g, tool, bounds.toFloat().reduced (bounds.getWidth() * 0.16f)
+                             .withTrimmedBottom (on ? 2.0f : 0.0f),
               Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::textMid),
               on ? 1.0f : (highlighted ? 0.9f : 0.7f));
 
     if (hasKeyboardFocus (false))
     {
         g.setColour (Theme::Colour::of (Theme::Colour::focus));
-        g.drawRect (bounds.expanded (1.0f), Theme::Metrics::focusRing);
+        g.drawRect (bounds, int (Theme::Metrics::focusRing));
     }
 }
 

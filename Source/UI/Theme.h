@@ -63,18 +63,24 @@ namespace Colour
     inline constexpr juce::uint32 focus      = 0xFF57C5EF;
     inline constexpr juce::uint32 warn       = 0xFFE86A3C;
 
+    // One pixel of light along the top and left, one of shadow along the
+    // bottom and right. That is the entire depth model: no gradients, no
+    // blurs, and every edge still on a whole pixel.
+    inline constexpr juce::uint32 bevelLight = 0xFF474D57;
+    inline constexpr juce::uint32 bevelDark  = 0xFF0B0D10;
+
     inline juce::Colour of (juce::uint32 argb) { return juce::Colour (argb); }
 }
 
 namespace Metrics
 {
-    inline constexpr int defaultWidth  = 880;
-    inline constexpr int defaultHeight = 400;
+    inline constexpr int defaultWidth  = 1100;
+    inline constexpr int defaultHeight = 560;
 
-    inline constexpr int titleBarHeight   = 22;
-    inline constexpr int rightColumnWidth = 142;
-    inline constexpr int bottomStripHeight = 54;   // two rows of controls
-    inline constexpr int rowHeight        = 22;
+    inline constexpr int titleBarHeight   = 28;
+    inline constexpr int rightColumnWidth = 196;
+    inline constexpr int bottomStripHeight = 42;   // one row of controls
+    inline constexpr int rowHeight        = 30;
     inline constexpr int freqAxisHeight   = 0;     // labels sit inside the plate
     inline constexpr int gap              = 4;
     inline constexpr int canvasInset      = 3;
@@ -87,18 +93,20 @@ namespace Metrics
     inline constexpr float minDb = -24.0f;
     inline constexpr float maxDb =  24.0f;
 
-    inline constexpr float labelSize  = 10.0f;
-    inline constexpr float smallSize  = 11.0f;
-    inline constexpr float bodySize   = 12.0f;
-    inline constexpr float titleSize  = 13.0f;
+    inline constexpr float labelSize  = 12.0f;
+    inline constexpr float smallSize  = 13.0f;
+    inline constexpr float bodySize   = 14.0f;
+    inline constexpr float titleSize  = 18.0f;
 
-    inline constexpr float tokenRadius = 8.0f;
+    inline constexpr float tokenRadius = 10.0f;
     inline constexpr float focusRing   = 1.0f;
 
-    /** Bar cells are drawn this wide with a one pixel gap, which is what makes
-        a bar read as counted rather than poured. */
-    inline constexpr int barCellWidth = 4;
-    inline constexpr int barCellGap   = 1;
+    /** Fader geometry, in whole pixels. The cap is deliberately taller than the
+        slot it runs in - that overhang is what makes it read as a thing sitting
+        on the panel rather than a mark drawn into it. */
+    inline constexpr int faderSlotHeight = 8;
+    inline constexpr int faderCapWidth   = 11;
+    inline constexpr int faderCapHeight  = 22;
 
     /** Nothing animates for longer than this (CONTEXT.md 9.7). */
     inline constexpr int maxAnimationMs = 200;
@@ -128,6 +136,14 @@ void drawTrackedLabel (juce::Graphics&, const juce::String& text, juce::Rectangl
     roughly where a band sits without the strip turning into a rainbow.
 */
 juce::Colour bandColour (float frequencyHz);
+
+/** One pixel of light along the top and left edges, one of shadow along the
+    bottom and right - or the reverse for something recessed into the panel.
+
+    This is the only depth in the interface, and it is what gives it the look of
+    the tracker software this kind of plugin grew out of: a raised control is
+    raised because two lines say so, not because a gradient implies it. */
+void drawPixelBevel (juce::Graphics&, juce::Rectangle<int>, bool raised);
 
 /** Registers the bundled typefaces. Called once by the editor. */
 void loadFonts();

@@ -60,13 +60,20 @@ void SlotStrip::paint (juce::Graphics& g)
         // A is the slot you draw into; B is where morph is heading. A is
         // filled amber, B is outlined in it - same colour, different weight, so
         // the pair reads as one relationship rather than two unrelated states.
+        const auto cell = area.toNearestInt();
+
         g.setColour (Theme::Colour::of (isA ? Theme::Colour::accent : Theme::Colour::raised)
                          .brighter (i == hovered ? 0.10f : 0.0f));
-        g.fillRect (area);
+        g.fillRect (cell);
+        Theme::drawPixelBevel (g, cell, ! isA);
 
-        g.setColour (isB ? Theme::Colour::of (Theme::Colour::accent)
-                         : Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.7f));
-        g.drawRect (area, isB ? 1.0f : 1.0f);
+        // B is outlined in the same amber that fills A - one colour, two
+        // weights, so the pair reads as one relationship.
+        if (isB)
+        {
+            g.setColour (Theme::Colour::of (Theme::Colour::accent));
+            g.drawRect (cell, 1);
+        }
 
         g.setFont (Theme::monoFont (Theme::Metrics::smallSize));
         g.setColour (Theme::Colour::of (isA || used || isB ? Theme::Colour::textHi

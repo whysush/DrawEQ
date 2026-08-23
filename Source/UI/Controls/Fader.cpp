@@ -1,13 +1,12 @@
-#include "BarControl.h"
+#include "Fader.h"
 
 namespace graphite
 {
 
 namespace
 {
-    // Narrow on purpose: every pixel here is one the bar does not get, and a
-    // bar with six cells in it is not a bar.
-    constexpr int kValueWidth = 32;
+    // Narrow on purpose: every pixel here is one the slot does not get.
+    constexpr int kValueWidth = 40;
 
     juce::String trimZeros (juce::String text)
     {
@@ -24,7 +23,7 @@ namespace
     }
 }
 
-BarControl::BarControl (juce::AudioProcessorValueTreeState& state, const juce::String& parameterID,
+Fader::Fader (juce::AudioProcessorValueTreeState& state, const juce::String& parameterID,
                         const juce::String& captionToShow, int captionWidthToUse)
     : caption (captionToShow), captionWidth (captionWidthToUse)
 {
@@ -73,7 +72,7 @@ BarControl::BarControl (juce::AudioProcessorValueTreeState& state, const juce::S
     refreshText();
 }
 
-BarControl::BarControl (const juce::String& captionToShow, juce::Range<double> range,
+Fader::Fader (const juce::String& captionToShow, juce::Range<double> range,
                         double interval, const juce::String& suffixToShow, int captionWidthToUse)
     : caption (captionToShow), suffix (suffixToShow), captionWidth (captionWidthToUse)
 {
@@ -111,16 +110,16 @@ BarControl::BarControl (const juce::String& captionToShow, juce::Range<double> r
     refreshText();
 }
 
-BarControl::~BarControl() = default;
+Fader::~Fader() = default;
 
-void BarControl::setSkewForFrequency()
+void Fader::setSkewForFrequency()
 {
     // Frequency is heard logarithmically, so the bar has to travel that way too
     // or the bottom four octaves live in the first two cells.
     slider.setSkewFactorFromMidPoint (std::sqrt (slider.getMinimum() * slider.getMaximum()));
 }
 
-void BarControl::setEnabledLook (bool shouldBeEnabled)
+void Fader::setEnabledLook (bool shouldBeEnabled)
 {
     slider.setEnabled (shouldBeEnabled);
     value.setEnabled (shouldBeEnabled);
@@ -129,13 +128,13 @@ void BarControl::setEnabledLook (bool shouldBeEnabled)
     repaint();
 }
 
-void BarControl::setValue (double v, juce::NotificationType n)
+void Fader::setValue (double v, juce::NotificationType n)
 {
     slider.setValue (v, n);
     refreshText();
 }
 
-void BarControl::refreshText()
+void Fader::refreshText()
 {
     if (! showValue)
     {
@@ -161,7 +160,7 @@ void BarControl::refreshText()
     repaint();
 }
 
-void BarControl::resized()
+void Fader::resized()
 {
     auto area = getLocalBounds();
     area.removeFromLeft (captionWidth);
@@ -169,61 +168,85 @@ void BarControl::resized()
     slider.setBounds (area);
 }
 
-void BarControl::paint (juce::Graphics& g)
+void Fader::paint (juce::Graphics& g)
 {
     Theme::drawTrackedLabel (g, caption, getLocalBounds().withWidth (captionWidth),
                              Theme::Colour::of (showValue ? Theme::Colour::textMid
                                                           : Theme::Colour::textLo),
                              juce::Justification::centredLeft);
 
-    const auto track = slider.getBounds().reduced (0, 5);
+    const auto area = slider.getBounds();
 
-    if (track.getWidth() <= 0)
+    if (area.getWidth() <= Theme::Metrics::faderCapWidth)
         return;
 
-    const int pitch = Theme::Metrics::barCellWidth + Theme::Metrics::barCellGap;
-    const int cells = juce::jmax (1, track.getWidth() / pitch);
+    const int capW = Theme::Metrics::faderCapWidth;
+    const int capH = juce::jmin (Theme::Metrics::faderCapHeight, area.getHeight());
+
+    // The cap's centre can only reach half a cap-width from each end, so the
+    // slot is inset to match. Otherwise the travel and the drawing disagree and
+    // the cap appears to stop short of the ends.
+    const int travelLeft  = area.getX() + capW / 2;
+    const int travelRight = area.getRight() - capW / 2;
+    const int travel = juce::jmax (1, travelRight - travelLeft);
+
+    const auto slot = juce::Rectangle<int> (travelLeft - 2, area.getCentreY()
+                                                - Theme::Metrics::faderSlotHeight / 2,
+                                            travel + 4, Theme::Metrics::faderSlotHeight);
+
+    g.setColour (Theme::Colour::of (Theme::Colour::recessed));
+    g.fillRect (slot);
+    Theme::drawPixelBevel (g, slot, false);
 
     const double range = slider.getMaximum() - slider.getMinimum();
-    const double norm  = range > 0.0 ? (slider.getValue() - slider.getMinimum()) / range : 0.0;
-
-    // Bipolar values fill outward from the middle, so "no change" reads as an
-    // empty bar rather than a half-full one.
+    const double norm = range > 0.0 ? (slider.getValue() - slider.getMinimum()) / range : 0.0;
     const bool bipolar = slider.getMinimum() < 0.0 && slider.getMaximum() > 0.0;
-    const double originNorm = bipolar
-        ? (0.0 - slider.getMinimum()) / range : 0.0;
 
-    const int valueCell  = juce::jlimit (0, cells, int (std::lround (norm * double (cells))));
-    const int originCell = juce::jlimit (0, cells, int (std::lround (originNorm * double (cells))));
+    // Ticks along the slot, and a taller one at centre for a bipolar control -
+    // the detent a console fader has moulded into it.
+    g.setColour (Theme::Colour::of (Theme::Colour::hairline));
 
-    const int lo = juce::jmin (valueCell, originCell);
-    const int hi = juce::jmax (valueCell, originCell);
-
-    const auto lit   = Theme::Colour::of (showValue ? Theme::Colour::plot : Theme::Colour::textLo);
-    const auto unlit = Theme::Colour::of (Theme::Colour::recessed);
-
-    for (int i = 0; i < cells; ++i)
+    for (int i = 0; i <= 8; ++i)
     {
-        const bool on = i >= lo && i < hi;
-        g.setColour (on ? lit : unlit);
-        g.fillRect (track.getX() + i * pitch, track.getY(),
-                    Theme::Metrics::barCellWidth, track.getHeight());
+        const int x = travelLeft + (travel * i) / 8;
+        const bool centre = bipolar && i == 4;
+        const int h = centre ? 5 : 3;
+        g.fillRect (x, slot.getBottom() + 1, 1, h);
     }
 
-    // A single brighter cell marks the value itself, so a bipolar bar still
-    // says which side of centre it is on when it is nearly empty.
-    if (showValue && cells > 0)
+    // The travelled part of the slot lights up, so the fader still says how
+    // much as well as where.
+    const int capX = travelLeft + int (std::lround (norm * double (travel)));
+    const int originX = travelLeft + int (std::lround ((bipolar ? (0.0 - slider.getMinimum()) / range
+                                                                : 0.0) * double (travel)));
+
+    if (showValue)
     {
-        const int marker = juce::jlimit (0, cells - 1, valueCell - (valueCell > originCell ? 1 : 0));
-        g.setColour (Theme::Colour::of (Theme::Colour::titleText));
-        g.fillRect (track.getX() + marker * pitch, track.getY(),
-                    Theme::Metrics::barCellWidth, track.getHeight());
+        const auto lit = juce::Rectangle<int>::leftTopRightBottom (
+            juce::jmin (capX, originX), slot.getY() + 2,
+            juce::jmax (capX, originX), slot.getBottom() - 2);
+
+        g.setColour (Theme::Colour::of (Theme::Colour::plot).withAlpha (0.85f));
+        g.fillRect (lit);
     }
+
+    const auto cap = juce::Rectangle<int> (capW, capH)
+                         .withCentre ({ capX, area.getCentreY() });
+
+    g.setColour (Theme::Colour::of (showValue ? Theme::Colour::raised : Theme::Colour::panel));
+    g.fillRect (cap);
+    Theme::drawPixelBevel (g, cap, true);
+
+    // The grip line down the middle of the cap: the one mark that makes a
+    // rectangle read as a fader rather than a block.
+    g.setColour (Theme::Colour::of (showValue ? Theme::Colour::titleText
+                                              : Theme::Colour::textLo));
+    g.fillRect (cap.getCentreX(), cap.getY() + 3, 1, cap.getHeight() - 6);
 
     if (slider.hasKeyboardFocus (false))
     {
         g.setColour (Theme::Colour::of (Theme::Colour::focus));
-        g.drawRect (slider.getBounds(), int (Theme::Metrics::focusRing));
+        g.drawRect (area, int (Theme::Metrics::focusRing));
     }
 }
 
