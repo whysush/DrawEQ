@@ -41,6 +41,18 @@ public:
 
     std::function<void()> onToolChanged;
 
+    /** Fires when the band the left column is editing changes. */
+    std::function<void()> onBandSelectionChanged;
+
+    /** The band currently under edit, if any. */
+    bool selectedBand (Band& out) const;
+
+    /** Writes new values into the selected band and re-derives the curve from
+        the whole stack - the same path the Node tool's drag takes, so a number
+        typed into the left column and a token dragged on the canvas cannot
+        disagree. */
+    void updateSelectedBand (float freqHz, float gainDb, float q);
+
 private:
     void timerCallback() override;
     CanvasContext makeContext() const;
@@ -68,6 +80,7 @@ private:
 
     // Node tool
     int   grabbedBand = -1;
+    int   chosenBand = -1;
     std::array<Band, kMaxBands> editableBands {};
     int   editableCount = 0;
     float editableTrim = 0.0f;

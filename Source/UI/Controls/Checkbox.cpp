@@ -12,40 +12,30 @@ public:
         setWantsKeyboardFocus (true);
     }
 
-    void paintButton (juce::Graphics& g, bool highlighted, bool) override
+    void paintButton (juce::Graphics& g, bool highlighted, bool down) override
     {
-        const auto bounds = getLocalBounds();
-        const int side = juce::jmin (14, bounds.getHeight() - 4);
-        const auto square = juce::Rectangle<int> (side, side)
-                                .withY (bounds.getCentreY() - side / 2)
-                                .withX (bounds.getX())
-                                .toFloat().reduced (0.5f);
+        const auto bounds = getLocalBounds().toFloat().reduced (0.5f);
+        const bool on = getToggleState();
 
-        g.setColour (Theme::Colour::of (Theme::Colour::recessed));
-        g.fillRect (square);
-        g.setColour (Theme::Colour::of (getToggleState() ? Theme::Colour::accent
-                                                         : Theme::Colour::hairline));
-        g.drawRect (square, 1.0f);
+        // Amber when on, grey when off - the same statement every other switch
+        // on the panel makes, so none of them need explaining twice.
+        g.setColour (Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::raised)
+                         .brighter (highlighted ? 0.08f : 0.0f)
+                         .darker (down ? 0.10f : 0.0f));
+        g.fillRoundedRectangle (bounds, 2.0f);
 
-        if (getToggleState())
-        {
-            // A filled core rather than a tick: at 14 px a tick is three grey
-            // pixels and a solid block is unambiguous.
-            g.setColour (Theme::Colour::of (Theme::Colour::accent));
-            g.fillRect (square.reduced (3.5f));
-        }
+        g.setColour (Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.7f));
+        g.drawRoundedRectangle (bounds, 2.0f, 1.0f);
 
-        Theme::drawTrackedLabel (g, getButtonText(),
-                                 bounds.withTrimmedLeft (side + 10),
-                                 Theme::Colour::of (getToggleState() ? Theme::Colour::textHi
-                                          : highlighted ? Theme::Colour::textMid
-                                                        : Theme::Colour::textLo),
-                                 juce::Justification::centredLeft);
+        Theme::drawTrackedLabel (g, getButtonText(), getLocalBounds(),
+                                 Theme::Colour::of (on ? Theme::Colour::textHi
+                                                       : Theme::Colour::textMid),
+                                 juce::Justification::centred);
 
         if (hasKeyboardFocus (false))
         {
             g.setColour (Theme::Colour::of (Theme::Colour::focus));
-            g.drawRect (bounds.toFloat().expanded (-0.5f), Theme::Metrics::focusRing);
+            g.drawRoundedRectangle (bounds, 2.0f, Theme::Metrics::focusRing);
         }
     }
 };

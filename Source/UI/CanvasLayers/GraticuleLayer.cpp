@@ -38,38 +38,26 @@ void GraticuleLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     // The frequency scale gets its own ruled strip below the plot rather than
     // floating over it. Inside the plot they would eventually sit under the
     // curve, and a label the curve crosses is worse than no label.
-    if (! ctx.axis.isEmpty())
+    // Both scales are set inside the plate, in a dim version of the plate's own
+    // text colour. Outside it they would need a margin the plot could otherwise
+    // be using, and at this dimness they never compete with the curve.
+    g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
+    g.setColour (Theme::Colour::of (Theme::Colour::textOnPlate).withAlpha (0.55f));
+
+    for (float hz : { 100.0f, 1000.0f, 10000.0f })
     {
-        g.setColour (Theme::Colour::of (Theme::Colour::hairline));
-        g.drawRect (ctx.axis, 1.0f);
-
-        g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
-        g.setColour (Theme::Colour::of (Theme::Colour::textLo));
-
-        for (float hz : { 30.0f, 100.0f, 300.0f, 1000.0f, 3000.0f, 10000.0f, 20000.0f })
-        {
-            const juce::String text = hz >= 1000.0f ? juce::String (hz / 1000.0f, 0) + "k"
-                                                    : juce::String (int (hz));
-
-            // The 20 k label would hang off the right edge, so it is pulled in
-            // and right-aligned instead of centred on its gridline.
-            const int x = int (ctx.xForHz (hz));
-            const auto cell = juce::Rectangle<int> (x - 24, int (ctx.axis.getY()), 48,
-                                                    int (ctx.axis.getHeight()));
-
-            g.drawText (text, cell.constrainedWithin (ctx.axis.toNearestInt()),
-                        juce::Justification::centred);
-        }
+        const juce::String text = hz >= 1000.0f ? juce::String (hz / 1000.0f, 0) + "k"
+                                                : juce::String (int (hz));
+        const int x = int (ctx.xForHz (hz));
+        g.drawText (text, x - 20, int (ctx.plot.getBottom()) - 17, 40, 14,
+                    juce::Justification::centred);
     }
 
-    g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
-    g.setColour (Theme::Colour::of (Theme::Colour::textLo));
-
-    for (float db : { -24.0f, -12.0f, 12.0f, 24.0f })
+    for (float db : { -12.0f, -6.0f, 6.0f, 12.0f })
     {
         const int y = int (ctx.yForDb (db));
-        g.drawText ((db > 0 ? "+" : "") + juce::String (int (db)),
-                    int (ctx.plot.getX()) + 6, y - 7, 34, 14, juce::Justification::centredLeft);
+        g.drawText ((db > 0 ? "" : "-") + juce::String (int (std::abs (db))),
+                    int (ctx.plot.getX()) + 5, y - 7, 30, 14, juce::Justification::centredLeft);
     }
 }
 

@@ -64,10 +64,8 @@ CanvasContext CurveCanvas::makeContext() const
 {
     CanvasContext ctx;
 
-    auto area = getLocalBounds().toFloat().reduced (float (Theme::Metrics::canvasInset));
-    ctx.axis = area.removeFromBottom (float (Theme::Metrics::freqAxisHeight));
-    area.removeFromBottom (float (Theme::Metrics::gap));
-    ctx.plot = area;
+    // The scales are drawn inside the plate now, so the plot takes all of it.
+    ctx.plot = getLocalBounds().toFloat().reduced (float (Theme::Metrics::canvasInset));
     ctx.ui         = &ui;
     ctx.analyzer   = &processor.analyzer();
     ctx.mode       = ui.mode;
@@ -77,7 +75,7 @@ CanvasContext CurveCanvas::makeContext() const
     ctx.commitPending = processor.worker().commitPending();
     ctx.hoveredBand = current == Tool::node && mouseInside
                     ? BandTokenLayer::hitTest (ctx, mousePos) : -1;
-    ctx.draggedBand = grabbedBand;
+    ctx.draggedBand = grabbedBand >= 0 ? grabbedBand : chosenBand;
     return ctx;
 }
 
@@ -121,6 +119,14 @@ void CurveCanvas::setTool (Tool t)
 
     current = t;
     grabbedBand = -1;
+
+    if (t != Tool::node)
+    {
+        chosenBand = -1;
+
+        if (onBandSelectionChanged != nullptr)
+            onBandSelectionChanged();
+    }
 
     if (onToolChanged != nullptr)
         onToolChanged();
@@ -202,6 +208,14 @@ void CurveCanvas::mouseDown (const juce::MouseEvent& e)
     {
         grabbedBand = BandTokenLayer::hitTest (ctx, e.position);
 
+        if (grabbedBand != chosenBand)
+        {
+            chosenBand = grabbedBand;
+
+            if (onBandSelectionChanged != nullptr)
+                onBandSelectionChanged();
+        }
+
         if (grabbedBand >= 0)
         {
             editableBands = ui.bands;
@@ -277,7 +291,40 @@ void CurveCanvas::mouseUp (const juce::MouseEvent& e)
     linePreview = false;
     lockDb = false;
     grabbedBand = -1;
+
+    if (onBandSelectionChanged != nullptr)
+        onBandSelectionChanged();
+
     repaint();
+}
+
+bool CurveCanvas::selectedBand (Band& out) const
+{
+    if (chosenBand < 0 || chosenBand >= ui.numBands)
+        return false;
+
+    out = ui.bands[std::size_t (chosenBand)];
+    return true;
+}
+
+void CurveCanvas::updateSelectedBand (float freqHz, float gainDb, float q)
+{
+    if (chosenBand < 0 || chosenBand >= ui.numBands)
+        return;
+
+    editableBands = ui.bands;
+    editableCount = ui.numBands;
+    editableTrim  = ui.trimDb;
+
+    auto& band = editableBands[std::size_t (chosenBand)];
+    band.freqHz = juce::jlimit (LogGrid::kFMin, LogGrid::kFMax, freqHz);
+    band.gainDb = juce::jlimit (-LogGrid::kMaxDb, LogGrid::kMaxDb, gainDb);
+    band.q      = juce::jlimit (0.1f, 18.0f, q);
+
+    processor.curve().beginGesture();
+    commitBands();
+    processor.curve().endGesture();
+    processor.worker().requestDeepFit();
 }
 
 void CurveCanvas::mouseMove (const juce::MouseEvent& e)

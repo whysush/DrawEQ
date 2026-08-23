@@ -49,7 +49,8 @@ set (GRAPHITE_PLUGIN_SOURCES
     Source/UI/CanvasLayers/CursorLayer.cpp
     Source/UI/Tools/DrawTools.cpp
     Source/UI/Controls/LookAndFeel.cpp
-    Source/UI/Controls/BarSlider.cpp
+    Source/UI/Controls/Knob.cpp
+    Source/UI/Controls/ValueField.cpp
     Source/UI/Controls/Checkbox.cpp
     Source/UI/Controls/Console.cpp
     Source/UI/Controls/ToolButton.cpp

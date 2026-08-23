@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Controls/BarSlider.h"
 #include "Controls/Checkbox.h"
 #include "Controls/Console.h"
+#include "Controls/Knob.h"
 #include "Controls/SlotStrip.h"
-#include "Controls/Toggle.h"
 #include "Controls/ToolButton.h"
+#include "Controls/ValueField.h"
 #include "CurveCanvas.h"
 
 namespace graphite
@@ -14,11 +14,12 @@ namespace graphite
 class GraphiteProcessor;
 
 /**
-    Slots across the top, canvas and tools on the left, parameters down the
-    right.
+    A grey instrument face: title strip across the top, the selected band's
+    controls down the left, settings down the right, tools and slots along the
+    bottom, and the plot plate taking everything that is left.
 
-    The canvas takes every pixel the chrome does not need, because the canvas is
-    the instrument and the rest is the settings for it.
+    The plate is the instrument and the chrome is the settings for it, so the
+    plate gets every pixel the chrome does not need.
 */
 class GraphiteEditor final : public juce::AudioProcessorEditor,
                              private juce::Timer
@@ -33,42 +34,42 @@ public:
 private:
     void timerCallback() override;
     void refreshToolButtons();
+    void refreshBandColumn();
+    void pushBandEdit();
     void toggleAnalyser();
     int  analyserChoice() const;
 
     GraphiteProcessor& processor;
     GraphiteLookAndFeel lookAndFeel;
 
-    SlotStrip   slots;
     CurveCanvas canvas;
-    Console     console;
+    SlotStrip   slots;
+    Console     status;
+
+    // Left column: whichever band the Node tool has hold of.
+    Knob bandFreq { "Freq", { 20.0, 20000.0 }, 0.1, "Hz" };
+    Knob bandGain { "Gain", { -30.0, 30.0 }, 0.01, "dB" };
+    Knob bandQ    { "Q",    { 0.1, 18.0 }, 0.01, "" };
+    bool suppressBandCallback = false;
 
     std::array<std::unique_ptr<ToolButton>, 5> toolButtons;
-    std::array<std::unique_ptr<Toggle>, 3> modeButtons;
+
+    juce::ComboBox modeBox, fidelityBox, shapeBox, analyserBox;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment,
+                                                                           analyserAttachment;
+
+    ValueField bands, mix, output, tilt, smooth, shift, morph;
+    Checkbox   invert, bypass, live;
     juce::TextButton analyseButton { "Analyse" };
 
-    BarSlider morph, tilt, smooth, shift, bands, mix, output;
-    Checkbox  invert, bypass, live;
+    // Painted regions, kept so live readouts can repaint without the canvas.
+    juce::Rectangle<int> titleArea, leftColumn, rightColumn, bottomStrip, plateArea;
 
-    juce::ComboBox analyserBox;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> analyserAttachment;
+    /** Captions for the controls that do not draw their own. Collected during
+        layout so paint() has nowhere to disagree with resized() about where
+        they go. */
+    std::vector<std::pair<juce::Rectangle<int>, juce::String>> captions;
 
-    /** Starting shapes. Resets to its prompt after each pick, so the same shape
-        can be chosen twice in a row. */
-    juce::ComboBox shapeBox;
-
-    /** How faithfully the drawing is passed to the DSP. These are presets over
-        the `smooth` parameter, which is the thing that actually rounds a sharp
-        corner - the bar below them still works, and moving it just means none
-        of the three is lit. */
-    std::array<juce::TextButton, 3> fidelityButtons;
-
-    // Regions painted rather than occupied by a child, kept so the status
-    // readouts can be repainted without redrawing the canvas.
-    juce::Rectangle<int> canvasPanelArea, canvasHeaderArea, toolBarArea, sidebarArea,
-                         shapeHeaderArea, setupHeaderArea;
-
-    /** What the analyser returns to when it is switched back on. */
     int lastAnalyserChoice = 3;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GraphiteEditor)

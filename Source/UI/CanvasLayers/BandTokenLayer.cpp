@@ -12,7 +12,15 @@ namespace
 
     juce::Point<float> tokenCentre (const CanvasContext& ctx, const Band& b)
     {
-        return { ctx.xForHz (b.freqHz), ctx.yForDb (juce::jlimit (ctx.minDb, ctx.maxDb, b.gainDb)) };
+        // Held far enough inside the plate that the whole disc stays on it. A
+        // band at 20 kHz is still at 20 kHz; a handle sliced in half by the
+        // plate edge is just harder to grab.
+        const float inset = Theme::Metrics::tokenRadius + 2.0f;
+
+        return { juce::jlimit (ctx.plot.getX() + inset, ctx.plot.getRight() - inset,
+                               ctx.xForHz (b.freqHz)),
+                 juce::jlimit (ctx.plot.getY() + inset, ctx.plot.getBottom() - inset,
+                               ctx.yForDb (juce::jlimit (ctx.minDb, ctx.maxDb, b.gainDb))) };
     }
 }
 
@@ -44,7 +52,7 @@ void BandTokenLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
         return;
 
     juce::Graphics::ScopedSaveState save (g);
-    g.reduceClipRegion (ctx.plot.toNearestInt().expanded (0, 20));
+    g.reduceClipRegion (ctx.plot.toNearestInt());
 
     for (int i = 0; i < ctx.ui->numBands; ++i)
     {
@@ -54,18 +62,25 @@ void BandTokenLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
         const bool hot  = i == ctx.hoveredBand || i == ctx.draggedBand;
 
         const auto colour = Theme::bandColour (b.freqHz);
-        const float radius = Theme::Metrics::tokenRadius * (hot ? 1.15f : 1.0f);
+        const float radius = Theme::Metrics::tokenRadius * (hot ? 1.12f : 1.0f);
         const auto circle = juce::Rectangle<float> (radius * 2.0f, radius * 2.0f).withCentre (centre);
 
-        const float alpha = idle ? 0.45f : 1.0f;
+        const float alpha = idle ? 0.4f : 1.0f;
 
-        g.setColour (colour.withAlpha (0.25f * alpha));
-        g.fillEllipse (circle);
+        // Solid discs, not rings. Against a dark plate a filled handle is
+        // unambiguously a thing to grab, and the number stays readable at
+        // 20 px where a ring's outline and its digit start to merge.
         g.setColour (colour.withAlpha (alpha));
-        g.drawEllipse (circle, hot ? 2.0f : 1.4f);
+        g.fillEllipse (circle);
+
+        if (hot)
+        {
+            g.setColour (Theme::Colour::of (Theme::Colour::titleText).withAlpha (0.9f));
+            g.drawEllipse (circle.expanded (1.5f), 1.5f);
+        }
 
         g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
-        g.setColour (Theme::Colour::of (Theme::Colour::textHi).withAlpha (alpha));
+        g.setColour (Theme::Colour::of (Theme::Colour::board).withAlpha (alpha));
         g.drawText (juce::String (i + 1), circle.toNearestInt(), juce::Justification::centred);
 
         if (! hot)
@@ -86,9 +101,9 @@ void BandTokenLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
                             .withCentre ({ int (centre.x), int (centre.y) - 24 })
                             .constrainedWithin (ctx.plot.toNearestInt());
 
-        g.setColour (Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.9f));
+        g.setColour (Theme::Colour::of (Theme::Colour::board).withAlpha (0.92f));
         g.fillRoundedRectangle (box.toFloat(), 3.0f);
-        g.setColour (Theme::Colour::of (Theme::Colour::textMid));
+        g.setColour (Theme::Colour::of (Theme::Colour::textOnPlate));
         g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
         g.drawText (text, box, juce::Justification::centred);
     }

@@ -6,69 +6,71 @@ namespace graphite
 GraphiteLookAndFeel::GraphiteLookAndFeel()
 {
     setColour (juce::Label::textColourId,          Theme::Colour::of (Theme::Colour::textHi));
-    setColour (juce::TextButton::buttonColourId,   Theme::Colour::of (Theme::Colour::recessed));
-    setColour (juce::TextButton::buttonOnColourId, Theme::Colour::of (Theme::Colour::raised));
-    setColour (juce::TextEditor::backgroundColourId, Theme::Colour::of (Theme::Colour::recessed));
-    setColour (juce::TextEditor::textColourId,     Theme::Colour::of (Theme::Colour::textHi));
-    setColour (juce::TextEditor::highlightColourId, Theme::Colour::of (Theme::Colour::accentDim));
-    setColour (juce::TextEditor::focusedOutlineColourId, Theme::Colour::of (Theme::Colour::accent));
-    setColour (juce::CaretComponent::caretColourId, Theme::Colour::of (Theme::Colour::accent));
-    setColour (juce::PopupMenu::backgroundColourId, Theme::Colour::of (Theme::Colour::panel));
-    setColour (juce::PopupMenu::textColourId,      Theme::Colour::of (Theme::Colour::textMid));
+    setColour (juce::TextButton::buttonColourId,   Theme::Colour::of (Theme::Colour::raised));
+    setColour (juce::TextButton::buttonOnColourId, Theme::Colour::of (Theme::Colour::accent));
+    setColour (juce::TextEditor::backgroundColourId, Theme::Colour::of (Theme::Colour::field));
+    setColour (juce::TextEditor::textColourId,     Theme::Colour::of (Theme::Colour::fieldText));
+    setColour (juce::TextEditor::highlightColourId, Theme::Colour::of (Theme::Colour::focus));
+    setColour (juce::TextEditor::focusedOutlineColourId, Theme::Colour::of (Theme::Colour::focus));
+    setColour (juce::CaretComponent::caretColourId, Theme::Colour::of (Theme::Colour::fieldText));
+    setColour (juce::PopupMenu::backgroundColourId, Theme::Colour::of (Theme::Colour::raised));
+    setColour (juce::PopupMenu::textColourId,      Theme::Colour::of (Theme::Colour::textHi));
     setColour (juce::PopupMenu::highlightedBackgroundColourId,
-               Theme::Colour::of (Theme::Colour::raised));
-    setColour (juce::PopupMenu::highlightedTextColourId, Theme::Colour::of (Theme::Colour::accent));
+               Theme::Colour::of (Theme::Colour::accent));
+    setColour (juce::PopupMenu::highlightedTextColourId, Theme::Colour::of (Theme::Colour::textHi));
 }
 
-void GraphiteLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
-                                            float sliderPos, float minSliderPos, float maxSliderPos,
-                                            juce::Slider::SliderStyle, juce::Slider& slider)
+void GraphiteLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height,
+                                            float sliderPos, float startAngle, float endAngle,
+                                            juce::Slider& s)
 {
-    const auto font = Theme::monoFont (Theme::Metrics::labelSize);
-    g.setFont (font);
+    const auto bounds = juce::Rectangle<int> (x, y, width, height).toFloat().reduced (2.0f);
+    const float radius = juce::jmin (bounds.getWidth(), bounds.getHeight()) * 0.5f;
+    const auto centre = bounds.getCentre();
+    const float angle = startAngle + sliderPos * (endAngle - startAngle);
 
-    // Monospace: every glyph has the same advance, so one measurement places
-    // every cell exactly.
-    const float charW = juce::jmax (1.0f, juce::GlyphArrangement::getStringWidth (font, "="));
-    const int   cells = juce::jlimit (4, 48, int ((float (width) - charW * 2.0f) / charW) - 1);
+    // A dark body, then the value as a thin arc outside it. The body is what
+    // makes the control read as a physical knob; the arc is what makes it read
+    // as a number, and the two jobs are better done by separate marks than by
+    // one bevelled dial trying to do both.
+    const float bodyRadius = radius * 0.72f;
+    g.setColour (Theme::Colour::of (Theme::Colour::board));
+    g.fillEllipse (juce::Rectangle<float> (bodyRadius * 2.0f, bodyRadius * 2.0f)
+                       .withCentre (centre));
 
-    const double range = slider.getMaximum() - slider.getMinimum();
-    const double norm  = range > 0.0 ? (slider.getValue() - slider.getMinimum()) / range : 0.0;
-    const int    filled = juce::jlimit (0, cells, int (std::lround (norm * double (cells))));
+    const float arcRadius = radius - 1.5f;
+    juce::Path track;
+    track.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f,
+                         startAngle, endAngle, true);
+    g.setColour (Theme::Colour::of (Theme::Colour::recessed));
+    g.strokePath (track, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved,
+                                               juce::PathStrokeType::rounded));
 
-    juce::ignoreUnused (sliderPos, minSliderPos, maxSliderPos);
+    // Bipolar parameters fill outward from the centre, so "no change" reads as
+    // an empty dial rather than a half-full one.
+    const bool bipolar = s.getMinimum() < 0.0 && s.getMaximum() > 0.0;
+    const float originPos = bipolar
+        ? float ((0.0 - s.getMinimum()) / (s.getMaximum() - s.getMinimum())) : 0.0f;
+    const float originAngle = startAngle + originPos * (endAngle - startAngle);
 
-    const float baseline = float (y) + float (height) * 0.5f + font.getHeight() * 0.34f;
-    float penX = float (x);
+    juce::Path fill;
+    fill.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f,
+                        juce::jmin (originAngle, angle), juce::jmax (originAngle, angle), true);
+    g.setColour (Theme::Colour::of (s.isEnabled() ? Theme::Colour::plot : Theme::Colour::recessed));
+    g.strokePath (fill, juce::PathStrokeType (2.5f, juce::PathStrokeType::curved,
+                                              juce::PathStrokeType::rounded));
 
-    auto put = [&] (const juce::String& text, juce::Colour colour)
-    {
-        g.setColour (colour);
+    juce::Path pointer;
+    pointer.startNewSubPath (centre.x, centre.y - bodyRadius * 0.25f);
+    pointer.lineTo (centre.x, centre.y - bodyRadius + 1.5f);
+    g.setColour (Theme::Colour::of (Theme::Colour::textOnPlate));
+    g.strokePath (pointer, juce::PathStrokeType (1.8f),
+                  juce::AffineTransform::rotation (angle, centre.x, centre.y));
 
-        for (int i = 0; i < text.length(); ++i)
-        {
-            g.drawSingleLineText (text.substring (i, i + 1), juce::roundToInt (penX),
-                                  juce::roundToInt (baseline));
-            penX += charW;
-        }
-    };
-
-    const auto bracket = Theme::Colour::of (Theme::Colour::textLo);
-    const auto lit     = Theme::Colour::of (slider.isEnabled() ? Theme::Colour::accent
-                                                              : Theme::Colour::accentDim);
-    const auto unlit   = Theme::Colour::of (Theme::Colour::graticuleM);
-
-    put ("[", bracket);
-    put (juce::String::repeatedString ("=", filled), lit);
-    put ("|", Theme::Colour::of (Theme::Colour::textHi));
-    put (juce::String::repeatedString (".", cells - filled), unlit);
-    put ("]", bracket);
-
-    if (slider.hasKeyboardFocus (false))
+    if (s.hasKeyboardFocus (false))
     {
         g.setColour (Theme::Colour::of (Theme::Colour::focus));
-        g.drawRect (juce::Rectangle<int> (x, y, width, height).toFloat().expanded (1.0f),
-                    Theme::Metrics::focusRing);
+        g.drawEllipse (bounds, Theme::Metrics::focusRing);
     }
 }
 
@@ -78,29 +80,28 @@ void GraphiteLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button&
     const auto bounds = b.getLocalBounds().toFloat().reduced (0.5f);
     const bool on = b.getToggleState();
 
-    g.setColour (Theme::Colour::of (on ? Theme::Colour::raised : Theme::Colour::recessed)
-                     .brighter (highlighted ? 0.10f : 0.0f)
-                     .darker (down ? 0.12f : 0.0f));
-    g.fillRect (bounds);
+    g.setColour (Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::raised)
+                     .brighter (highlighted ? 0.08f : 0.0f)
+                     .darker (down ? 0.10f : 0.0f));
+    g.fillRoundedRectangle (bounds, 2.0f);
 
-    g.setColour (Theme::Colour::of (on ? Theme::Colour::accent : Theme::Colour::hairline));
-    g.drawRect (bounds, on ? 1.4f : 1.0f);
+    g.setColour (Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.7f));
+    g.drawRoundedRectangle (bounds, 2.0f, 1.0f);
 
     if (b.hasKeyboardFocus (false))
     {
         g.setColour (Theme::Colour::of (Theme::Colour::focus));
-        g.drawRect (bounds.expanded (1.0f), Theme::Metrics::focusRing);
+        g.drawRoundedRectangle (bounds.reduced (0.5f), 2.0f, Theme::Metrics::focusRing);
     }
 }
 
 void GraphiteLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b,
                                           bool highlighted, bool)
 {
-    const auto colour = b.getToggleState() ? Theme::Colour::of (Theme::Colour::accent)
-                      : highlighted        ? Theme::Colour::of (Theme::Colour::textHi)
-                                           : Theme::Colour::of (Theme::Colour::textMid);
+    juce::ignoreUnused (highlighted);
 
-    Theme::drawTrackedLabel (g, b.getButtonText(), b.getLocalBounds(), colour,
+    Theme::drawTrackedLabel (g, b.getButtonText(), b.getLocalBounds(),
+                             Theme::Colour::of (Theme::Colour::textHi),
                              juce::Justification::centred);
 }
 
@@ -109,43 +110,41 @@ void GraphiteLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height
 {
     auto bounds = juce::Rectangle<int> (0, 0, width, height).toFloat().reduced (0.5f);
 
-    g.setColour (Theme::Colour::of (Theme::Colour::recessed));
-    g.fillRect (bounds);
-    g.setColour (Theme::Colour::of (box.hasKeyboardFocus (false) ? Theme::Colour::accent
-                                                                 : Theme::Colour::hairline));
-    g.drawRect (bounds, 1.0f);
+    g.setColour (Theme::Colour::of (Theme::Colour::raised));
+    g.fillRoundedRectangle (bounds, 2.0f);
+    g.setColour (Theme::Colour::of (box.hasKeyboardFocus (false) ? Theme::Colour::focus
+                                                                 : Theme::Colour::recessed));
+    g.drawRoundedRectangle (bounds, 2.0f, 1.0f);
 
     // Drawn rather than typed: a triangle glyph is exactly the sort of
-    // character a bundled face may not carry, and a missing one renders as
-    // tofu.
-    const auto arrowCell = bounds.removeFromRight (20.0f);
-    const float w = 7.0f, h = 4.0f;
-    const auto c = arrowCell.getCentre();
+    // character a bundled face may not carry, and a missing one renders as tofu.
+    const auto cell = bounds.removeFromRight (16.0f);
+    const auto c = cell.getCentre();
 
     juce::Path caret;
-    caret.startNewSubPath (c.x - w * 0.5f, c.y - h * 0.5f);
-    caret.lineTo (c.x + w * 0.5f, c.y - h * 0.5f);
-    caret.lineTo (c.x, c.y + h * 0.5f);
+    caret.startNewSubPath (c.x - 3.5f, c.y - 2.0f);
+    caret.lineTo (c.x + 3.5f, c.y - 2.0f);
+    caret.lineTo (c.x, c.y + 2.5f);
     caret.closeSubPath();
 
-    g.setColour (Theme::Colour::of (Theme::Colour::textMid));
+    g.setColour (Theme::Colour::of (Theme::Colour::textHi));
     g.fillPath (caret);
 }
 
 void GraphiteLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)
 {
-    label.setBounds (8, 0, box.getWidth() - 26, box.getHeight());
+    label.setBounds (6, 0, box.getWidth() - 22, box.getHeight());
     label.setFont (getComboBoxFont (box));
 }
 
 juce::Font GraphiteLookAndFeel::getComboBoxFont (juce::ComboBox&)
 {
-    return Theme::monoFont (Theme::Metrics::labelSize);
+    return Theme::labelFont (Theme::Metrics::labelSize);
 }
 
 juce::Font GraphiteLookAndFeel::getPopupMenuFont()
 {
-    return Theme::monoFont (Theme::Metrics::smallSize);
+    return Theme::labelFont (Theme::Metrics::bodySize);
 }
 
 juce::Font GraphiteLookAndFeel::getLabelFont (juce::Label&)

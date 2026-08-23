@@ -26,63 +26,39 @@ void Console::paint (juce::Graphics& g)
 
     const double sr = processor.getSampleRate() > 0.0 ? processor.getSampleRate() : 48000.0;
     const double latencyMs = 1000.0 * double (processor.getLatencySamples()) / sr;
+    const bool poor = ui.valid && ui.maxErrorDb > 3.0f;
 
-    const bool poor = ui.maxErrorDb > 3.0f;
+    const auto dot = juce::String::fromUTF8 ("\xc2\xb7");
 
-    const juce::String modeName = ui.mode == Mode::analog          ? "analog"
-                                : ui.mode == Mode::spectralLinear  ? "spectral lin"
-                                                                   : "spectral min";
-
-    juce::StringArray lines;
+    juce::String text;
 
     if (processor.worker().commitPending())
     {
-        lines.add ("> drawing " + juce::String::fromUTF8 ("\xe2\x80\x94")
-                   + " release to fit");
+        text = "drawing " + dot + " release to fit";
     }
     else if (! ui.valid)
     {
-        lines.add ("> waiting for first fit");
-    }
-    else if (ui.mode == Mode::analog)
-    {
-        // numBands counts the two shelves; the user set the bell count, and
-        // the header says that, so this must agree with the header.
-        const int bells = juce::jmax (0, ui.numBands - 2);
-
-        lines.add ("> fit " + juce::String (poor ? "poor" : "ok")
-                   + " " + juce::String::fromUTF8 ("\xe2\x80\x94") + " "
-                   + juce::String (bells) + " bands, err "
-                   + juce::String (ui.maxErrorDb, 2) + " dB");
+        text = "waiting for first fit";
     }
     else
     {
-        lines.add ("> spectral " + juce::String::fromUTF8 ("\xe2\x80\x94") + " err "
-                   + juce::String (ui.maxErrorDb, 2) + " dB");
+        // Every figure here is measured. A status line reporting a plausible
+        // constant would be worse than no status line.
+        if (ui.mode == Mode::analog)
+            text = juce::String (juce::jmax (0, ui.numBands - 2)) + " bands " + dot + " ";
+
+        text += "err " + juce::String (ui.maxErrorDb, 2) + " dB " + dot + " "
+              + juce::String (latencyMs, latencyMs < 10.0 ? 1 : 0) + " ms " + dot + " "
+              + juce::String (processor.audioLoadPercent(), 1) + "%";
     }
-
-    lines.add ("> latency " + juce::String (latencyMs, latencyMs < 10.0 ? 1 : 0)
-               + " ms " + juce::String::fromUTF8 ("\xc2\xb7") + " load "
-               + juce::String (processor.audioLoadPercent(), 1) + "%");
-
-    lines.add ("> " + modeName + " " + juce::String::fromUTF8 ("\xc2\xb7") + " "
-               + juce::String (sr / 1000.0, 1) + " kHz");
 
     g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
-
-    auto area = getLocalBounds().reduced (2, 0);
-    const int lineHeight = 16;
-
-    for (int i = 0; i < lines.size(); ++i)
-    {
-        const bool pending = processor.worker().commitPending() && i == 0;
-        const bool warn = ! pending && poor && i == 0 && ui.valid && ui.mode == Mode::analog;
-        g.setColour (Theme::Colour::of (pending ? Theme::Colour::accent
-                                       : warn    ? Theme::Colour::warn
-                                       : i == 0  ? Theme::Colour::textMid
-                                                 : Theme::Colour::textLo));
-        g.drawText (lines[i], area.removeFromTop (lineHeight), juce::Justification::centredLeft);
-    }
+    // The warn colour is chosen to read on the grey chrome, and the title bar
+    // is darker than that - so it gets brightened here rather than being left
+    // to sit at two thirds contrast where it matters most.
+    g.setColour (poor ? Theme::Colour::of (Theme::Colour::warn).brighter (0.55f)
+                      : Theme::Colour::of (Theme::Colour::titleText).withAlpha (0.65f));
+    g.drawText (text, getLocalBounds(), juce::Justification::centredRight);
 }
 
 } // namespace graphite

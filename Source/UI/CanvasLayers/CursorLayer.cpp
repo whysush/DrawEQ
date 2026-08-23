@@ -70,10 +70,12 @@ void CursorLayer::paintErrorReadout (juce::Graphics& g, const CanvasContext& ctx
     if (ctx.ui->maxErrorDb <= 3.0f || ctx.mode != Mode::analog)
         return;
 
+    // Clear of the frequency scale along the bottom of the plate, which shares
+    // this corner.
     g.setFont (Theme::monoFont (Theme::Metrics::labelSize));
-    g.setColour (Theme::Colour::of (Theme::Colour::warn));
-    g.drawText ("SPECTRAL MODE WILL FIT THIS EXACTLY",
-                int (ctx.plot.getX()) + 8, int (ctx.plot.getBottom()) - 22, 340, 14,
+    g.setColour (Theme::Colour::of (Theme::Colour::warn).brighter (0.4f));
+    g.drawText ("Spectral mode will fit this exactly",
+                int (ctx.plot.getX()) + 8, int (ctx.plot.getBottom()) - 38, 340, 14,
                 juce::Justification::centredLeft);
 }
 

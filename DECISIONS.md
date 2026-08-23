@@ -439,3 +439,49 @@ order of magnitude of slack never catches the regression it exists for.
 This also closes part of the "factory presets not authored" gap noted at the top
 of this file: the bank still ships empty, but the plugin no longer starts with
 nothing to reach for.
+
+---
+
+## Third visual direction: the grey instrument face
+
+On a supplied reference (Ableton's EQ Eight), the interface moved again. The
+phosphor terminal recorded above is gone. What replaced it:
+
+- **Warm grey chrome with a recessed dark plate.** The only depth in the panel
+  comes from the plot being darker than the face it sits in; nothing is
+  bevelled or textured. That is where the "old but new" quality lives - the
+  panel reads as a physical device, the controls on it are flat.
+- **Two colours doing two jobs, consistently.** Blue is what the filter *does*:
+  the response curve, the knob arcs, the value fields. Amber is what the user
+  can *grab or has switched on*: band handles, the active slot, engaged
+  switches. Nothing is coloured for decoration, so a glance at any control says
+  which kind of thing it is.
+- **Band handles became solid amber discs.** Against a dark plate a filled
+  handle is unambiguously a thing to grab, and at 20 px the number stays
+  readable where a ring's outline and its digit start to merge. Frequency still
+  rides the colour, now as a warm-to-bright ramp inside the amber rather than
+  as a hue - deep ochre at 20 Hz, pale gold at 20 kHz - so the strip does not
+  turn into a rainbow.
+- **Knobs and tinted value fields replaced the character bars.** `BarSlider` is
+  deleted; `Knob` is back for the left column and `ValueField` handles the
+  right. A tinted field means "this number is yours to change", which is a
+  cheaper affordance than any border or handle.
+- **Scales moved inside the plate**, dimmed, which returns the margin they were
+  using to the plot.
+
+**A new control came with the layout.** The reference devotes its left column to
+the selected band's frequency, gain and Q, and GRAPHITE already had the Node
+tool for grabbing bands - so clicking a band with it now fills that column, and
+typing into it writes back through exactly the path a drag takes. A number typed
+and a token dragged cannot disagree, because they are the same code.
+
+Selecting a band must not count as editing it: writing values into the knobs
+fires their callbacks, which would push straight back into the curve and re-fit.
+A guard around the refresh is what keeps a click from being a change.
+
+**Not adopted.** The reference's per-band filter-type dropdowns have no
+counterpart here - band types are the fitter's output, not the user's input,
+and offering a control that the next fit would overwrite would be a lie. Its
+`Scale` control is likewise absent: the plate shows the full +/-30 dB the curve
+model allows, which wastes some vertical space on a gentle curve but never
+displays a -30 dB cut as though it were -20.

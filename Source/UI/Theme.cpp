@@ -39,9 +39,7 @@ void loadFonts()
    #endif
 }
 
-// Labels are monospaced too in this scheme; the wordmark is the only thing
-// set in the grotesk.
-juce::Font labelFont (float height) { return makeFont (mono, height, true); }
+juce::Font labelFont (float height) { return makeFont (grotesk, height, false); }
 juce::Font monoFont  (float height) { return makeFont (mono, height, true); }
 juce::Font titleFont()              { return makeFont (grotesk, Metrics::titleSize, false); }
 
@@ -91,11 +89,11 @@ juce::Colour bandColour (float frequencyHz)
     struct Stop { float norm; juce::uint32 argb; };
 
     static constexpr Stop stops[] {
-        { 0.00f, 0xFF4E5F56 },   // dim slate-green, 20 Hz
-        { 0.30f, 0xFF5E7C68 },
-        { 0.58f, 0xFF6FA37D },
-        { 0.80f, 0xFF57C489 },
-        { 1.00f, 0xFF3FE08A }    // full phosphor, 20 kHz
+        { 0.00f, 0xFFD98A2B },   // deep ochre, 20 Hz
+        { 0.35f, 0xFFE8992F },
+        { 0.65f, 0xFFF2A33C },
+        { 0.85f, 0xFFF5B94A },
+        { 1.00f, 0xFFF7CC5C }    // pale gold, 20 kHz
     };
 
     const float t = juce::jlimit (0.0f, 1.0f, LogGrid::hzToNorm (frequencyHz));

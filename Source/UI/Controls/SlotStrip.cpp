@@ -25,7 +25,7 @@ juce::Rectangle<float> SlotStrip::boundsForSlot (int index) const
 {
     // The leading cell is the "SLOT" caption, so the eight buttons divide what
     // is left rather than the whole width.
-    const float labelWidth = 108.0f;
+    const float labelWidth = 48.0f;
     const float w = (float (getWidth()) - labelWidth) / float (PresetBank::kSlots);
     return juce::Rectangle<float> (labelWidth + float (index) * w, 0.0f, w, float (getHeight()))
                .reduced (3.0f, 2.0f);
@@ -46,7 +46,7 @@ void SlotStrip::paint (juce::Graphics& g)
     const int slotA = int (state.getRawParameterValue (params::id::morphA)->load());
     const int slotB = int (state.getRawParameterValue (params::id::morphB)->load());
 
-    Theme::drawTrackedLabel (g, "Slot", getLocalBounds().withWidth (108).reduced (14, 0),
+    Theme::drawTrackedLabel (g, "Slot", getLocalBounds().withWidth (44),
                              Theme::Colour::of (Theme::Colour::textMid),
                              juce::Justification::centredLeft);
 
@@ -57,27 +57,20 @@ void SlotStrip::paint (juce::Graphics& g)
         const bool isB = (i + 1) == slotB;
         const bool used = processor.bank().isUsed (i);
 
-        g.setColour (Theme::Colour::of (isA ? Theme::Colour::raised : Theme::Colour::recessed));
-        g.fillRect (area);
-
-        if (i == hovered)
-        {
-            g.setColour (Theme::Colour::of (Theme::Colour::accent).withAlpha (0.08f));
-            g.fillRect (area);
-        }
-
-        // A is the slot you draw into; B is where morph is heading. A gets the
-        // phosphor, B gets an outline of it - same hue, different weight, so
+        // A is the slot you draw into; B is where morph is heading. A is
+        // filled amber, B is outlined in it - same colour, different weight, so
         // the pair reads as one relationship rather than two unrelated states.
-        g.setColour (isA ? Theme::Colour::of (Theme::Colour::accent)
-                   : isB ? Theme::Colour::of (Theme::Colour::accentDim).withAlpha (0.75f)
-                         : Theme::Colour::of (Theme::Colour::hairline));
-        g.drawRect (area, isA ? 1.6f : 1.0f);
+        g.setColour (Theme::Colour::of (isA ? Theme::Colour::accent : Theme::Colour::raised)
+                         .brighter (i == hovered ? 0.10f : 0.0f));
+        g.fillRoundedRectangle (area, 2.0f);
 
-        g.setFont (Theme::monoFont (Theme::Metrics::bodySize));
-        g.setColour (Theme::Colour::of (isA ? Theme::Colour::accent
-                                  : used || isB ? Theme::Colour::textHi
-                                                : Theme::Colour::textLo));
+        g.setColour (isB ? Theme::Colour::of (Theme::Colour::accent)
+                         : Theme::Colour::of (Theme::Colour::recessed).withAlpha (0.7f));
+        g.drawRoundedRectangle (area, 2.0f, isB ? 1.6f : 1.0f);
+
+        g.setFont (Theme::monoFont (Theme::Metrics::smallSize));
+        g.setColour (Theme::Colour::of (isA || used || isB ? Theme::Colour::textHi
+                                                           : Theme::Colour::textLo));
         g.drawText (juce::String (i + 1), area.toNearestInt(), juce::Justification::centred);
 
         if (i == focused && hasKeyboardFocus (false))

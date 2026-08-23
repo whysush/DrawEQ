@@ -7,23 +7,22 @@ namespace graphite
 {
 
 /**
-    Shared drawing for every control, so a focus ring, a hover state and a
-    hairline mean the same thing everywhere.
+    Shared drawing for every control, so a focus ring, a hover state and an
+    "on" state mean the same thing everywhere.
 
-    The linear slider is drawn as a run of monospaced characters -
-    `[========|.......]` - rather than as a filled track. It is not decoration:
-    the cells quantise the value visually, so two parameters at the same setting
-    line up exactly, and a glance down the column reads like a column of
-    numbers rather than a row of unrelated bars.
+    Two rules carry the whole look. Anything the user can grab or has switched
+    on is amber; anything reporting what the filter is doing is blue. Nothing is
+    bevelled, and the only depth in the panel comes from the plot plate being
+    darker than the face it sits in.
 */
 class GraphiteLookAndFeel final : public juce::LookAndFeel_V4
 {
 public:
     GraphiteLookAndFeel();
 
-    void drawLinearSlider (juce::Graphics&, int x, int y, int width, int height,
-                           float sliderPos, float minSliderPos, float maxSliderPos,
-                           juce::Slider::SliderStyle, juce::Slider&) override;
+    void drawRotarySlider (juce::Graphics&, int x, int y, int width, int height,
+                           float sliderPos, float startAngle, float endAngle,
+                           juce::Slider&) override;
 
     void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&,
                                bool highlighted, bool down) override;
