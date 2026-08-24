@@ -47,6 +47,16 @@ jobs:
       - name: Unit tests
         run: ctest --test-dir build -C RelWithDebInfo --output-on-failure
 
+      # Reported, not gated. The budgets are real, but a runner this size and
+      # this shared cannot measure them meaningfully - the numbers are here to
+      # be read, and the enforcing happens on hardware we know.
+      - name: Performance budgets (informational)
+        shell: bash
+        continue-on-error: true
+        run: |
+          T=$(find build -name "DrawEQTests" -o -name "DrawEQTests.exe" | head -1)
+          "$T" "[performance]" --success || true
+
       # Exercises the VST3 boundary rather than the DSP classes: bus
       # negotiation, the parameter interface, the state blob, latency changes.
       # Located by name rather than by permission bit: the executable bit does

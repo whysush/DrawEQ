@@ -623,3 +623,32 @@ something specific to FL Studio's wrapper - its plugin window handling, its
 delay compensation around a mode change, or how it treats a resizable editor
 with a fixed aspect ratio. Loading it in FL remains the outstanding test, and it
 is the first thing to do on a Windows machine.
+
+---
+
+## Timing budgets are measured, not gated in CI
+
+The first Windows CI run failed on this:
+
+    cold fit 52.9053 ms, max error 0.00158088 dB
+    REQUIRE( ms < 50.0 )
+
+The fit was correct to a thousandth of a dB. What failed was a wall-clock
+assertion, on a shared two-core runner, against a budget CONTEXT.md 10
+specifies for "a 2020-era quad-core laptop". A 6 % overshoot there says nothing
+about whether the fitter got slower - it says the runner had neighbours.
+
+Gating on it was my mistake, and loosening the budget would have been the wrong
+fix: the number is a real product requirement and CONTEXT.md 10 asks for it to
+be stated rather than shipped past. So the budgets stay exactly where they are
+and keep failing the build on a machine whose speed is known, and CI runs them
+in a separate step that reports the figures without gating. `ctest` runs
+`~[performance]`.
+
+**Worth knowing regardless:** the same fit takes 28 ms here and 53 ms on the CI
+runner. Some of that is a slower machine and some may be MSVC generating slower
+code than GCC for the Eigen-heavy solver - the two cannot be separated from
+here. Either way, on modest hardware a 24-band cold fit can exceed the 50 ms
+budget. It runs on the worker thread with audio still playing through the
+previous filter, so the cost is latency before a committed curve is heard, not
+a dropout.
