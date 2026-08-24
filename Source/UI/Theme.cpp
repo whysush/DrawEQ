@@ -1,7 +1,7 @@
 #include "Theme.h"
 #include "../Core/LogGrid.h"
 
-#if DRAWEQ_HAS_EMBEDDED_FONTS
+#if DRAWEQ_HAS_RESOURCES
  #include "BinaryData.h"
 #endif
 
@@ -28,7 +28,7 @@ namespace
 
 void loadFonts()
 {
-   #if DRAWEQ_HAS_EMBEDDED_FONTS
+   #if DRAWEQ_HAS_RESOURCES
     if (grotesk == nullptr)
         grotesk = juce::Typeface::createSystemTypefaceFor (BinaryData::SpaceGroteskMedium_ttf,
                                                            BinaryData::SpaceGroteskMedium_ttfSize);

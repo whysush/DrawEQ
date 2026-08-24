@@ -4,6 +4,11 @@
 #include "CanvasLayers/CurveLayer.h"
 #include "CanvasLayers/CursorLayer.h"
 #include "CanvasLayers/GraticuleLayer.h"
+#include "CanvasLayers/StickerLayer.h"
+
+#if DRAWEQ_HAS_RESOURCES
+ #include "BinaryData.h"
+#endif
 #include "../Core/CurveShaping.h"
 
 namespace draweq
@@ -13,6 +18,10 @@ CurveCanvas::CurveCanvas (DrawEQProcessor& p)
     : processor (p)
 {
     setWantsKeyboardFocus (true);
+
+   #if DRAWEQ_HAS_RESOURCES
+    sticker = juce::ImageCache::getFromMemory (BinaryData::mascot_png, BinaryData::mascot_pngSize);
+   #endif
    #if ! JUCE_LINUX
     // A crosshair is the right pointer for a surface you draw on, and it is set
     // everywhere it can safely be set.
@@ -86,6 +95,7 @@ void CurveCanvas::paint (juce::Graphics& g)
     g.fillAll (Theme::Colour::of (Theme::Colour::board));
 
     GraticuleLayer::paint (g, ctx);
+    StickerLayer::paint (g, ctx, sticker);
     AnalyzerLayer::paint (g, ctx);
     CurveLayer::paint (g, ctx);
     BandTokenLayer::paint (g, ctx);

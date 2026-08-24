@@ -47,6 +47,7 @@ set (DRAWEQ_PLUGIN_SOURCES
     Source/UI/CanvasLayers/CurveLayer.cpp
     Source/UI/CanvasLayers/BandTokenLayer.cpp
     Source/UI/CanvasLayers/CursorLayer.cpp
+    Source/UI/CanvasLayers/StickerLayer.cpp
     Source/UI/Tools/DrawTools.cpp
     Source/UI/Controls/LookAndFeel.cpp
     Source/UI/Controls/Fader.cpp
@@ -65,18 +66,21 @@ set (DRAWEQ_FONT_FILES
     Resources/Fonts/SpaceGrotesk-Medium.ttf
     Resources/Fonts/JetBrainsMono-Regular.ttf)
 
-set (DRAWEQ_FONTS_PRESENT TRUE)
+set (DRAWEQ_IMAGE_FILES Resources/Images/mascot.png)
+
+set (DRAWEQ_RESOURCES_PRESENT TRUE)
 foreach (f ${DRAWEQ_FONT_FILES})
     if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${f})
-        set (DRAWEQ_FONTS_PRESENT FALSE)
+        set (DRAWEQ_RESOURCES_PRESENT FALSE)
     endif ()
 endforeach ()
 
-if (DRAWEQ_FONTS_PRESENT)
-    juce_add_binary_data (DrawEQResources SOURCES ${DRAWEQ_FONT_FILES})
+if (DRAWEQ_RESOURCES_PRESENT)
+    juce_add_binary_data (DrawEQResources
+        SOURCES ${DRAWEQ_FONT_FILES} ${DRAWEQ_IMAGE_FILES})
 else ()
-    message (WARNING "Bundled fonts missing - falling back to system faces. "
-                     "Run Tools/fetch_fonts.sh to restore them.")
+    message (WARNING "Bundled resources missing - falling back to system faces "
+                     "and no artwork. Run Tools/fetch_fonts.sh to restore the fonts.")
     add_library (DrawEQResources INTERFACE)
 endif ()
 
@@ -122,10 +126,10 @@ target_link_libraries (DrawEQ
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
 
-if (DRAWEQ_FONTS_PRESENT)
-    target_compile_definitions (DrawEQ PRIVATE DRAWEQ_HAS_EMBEDDED_FONTS=1)
+if (DRAWEQ_RESOURCES_PRESENT)
+    target_compile_definitions (DrawEQ PRIVATE DRAWEQ_HAS_RESOURCES=1)
 else ()
-    target_compile_definitions (DrawEQ PRIVATE DRAWEQ_HAS_EMBEDDED_FONTS=0)
+    target_compile_definitions (DrawEQ PRIVATE DRAWEQ_HAS_RESOURCES=0)
 endif ()
 
 # ---------------------------------------------------------------------------
@@ -144,7 +148,7 @@ target_compile_definitions (DrawEQSnapshot PUBLIC
     JUCE_STANDALONE_APPLICATION=1
     JUCE_MODAL_LOOPS_PERMITTED=1
     JUCE_REPORT_APP_USAGE=0
-    DRAWEQ_HAS_EMBEDDED_FONTS=$<IF:$<BOOL:${DRAWEQ_FONTS_PRESENT}>,1,0>)
+    DRAWEQ_HAS_RESOURCES=$<IF:$<BOOL:${DRAWEQ_RESOURCES_PRESENT}>,1,0>)
 
 target_include_directories (DrawEQSnapshot PRIVATE Source)
 
