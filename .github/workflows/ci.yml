@@ -41,21 +41,29 @@ jobs:
 
       # The DSP tests are headless by design, so they run everywhere without a
       # display server.
+      # -C matters on Windows: Visual Studio is a multi-config generator, so
+      # the build type is chosen here rather than at configure time, and
+      # without it ctest finds no tests at all.
       - name: Unit tests
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build -C RelWithDebInfo --output-on-failure
 
       # Exercises the VST3 boundary rather than the DSP classes: bus
       # negotiation, the parameter interface, the state blob, latency changes.
+      # Located by name rather than by permission bit: the executable bit does
+      # not survive on Windows checkouts, so -perm -u+x matches nothing there.
       - name: Host simulation
         shell: bash
         run: |
           VST3=$(find build -name "*.vst3" | head -1)
-          find build -name "DrawEQHostSim*" -type f -perm -u+x -exec {} "$VST3" \;
+          SIM=$(find build -name "DrawEQHostSim" -o -name "DrawEQHostSim.exe" | head -1)
+          echo "running $SIM against $VST3"
+          "$SIM" "$VST3"
 
       - name: Fit benchmark
         shell: bash
         run: |
-          find build -name "DrawEQFitBench*" -type f -perm -u+x -exec {} 24 \;
+          BENCH=$(find build -name "DrawEQFitBench" -o -name "DrawEQFitBench.exe" | head -1)
+          "$BENCH" 24
 
       - name: Fetch pluginval
         shell: bash
@@ -65,7 +73,11 @@ jobs:
           else
             curl -fsSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.3/pluginval_Linux.zip
           fi
-          7z x pluginval.zip -aoa
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            7z x pluginval.zip -aoa
+          else
+            unzip -oq pluginval.zip
+          fi
 
       # Strictness 10, as CONTEXT.md 11 requires. --skip-gui-tests only on
       # Linux CI, which has no display server; the GUI tests do run locally and
@@ -84,5 +96,13 @@ jobs:
       - name: Upload VST3
         uses: actions/upload-artifact@v4
         with:
-          name: DrawEQ-${{ matrix.name }}
+          name: DrawEQ-${{ matrix.name }}-VST3
           path: build/DrawEQ_artefacts/RelWithDebInfo/VST3
+          if-no-files-found: error
+
+      - name: Upload standalone
+        uses: actions/upload-artifact@v4
+        with:
+          name: DrawEQ-${{ matrix.name }}-Standalone
+          path: build/DrawEQ_artefacts/RelWithDebInfo/Standalone
+          if-no-files-found: error

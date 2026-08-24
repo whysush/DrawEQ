@@ -17,6 +17,15 @@ fetch https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsM
 for f in SpaceGrotesk-Medium.ttf JetBrainsMono-Regular.ttf; do
     # A truncated or HTML-error download is worse than a missing file, because
     # BinaryData will happily embed it and the plugin will fall back silently.
-    head -c 4 "$f" | grep -q $'\x00\x01\x00\x00' || { echo "!! $f is not a TTF"; exit 1; }
+    #
+    # Checked with od rather than by grepping for the NUL bytes of the TrueType
+    # magic: grep's handling of NUL differs between GNU grep and the one Git
+    # Bash ships on Windows, and the check quietly failed there.
+    magic=$(od -An -tx1 -N4 "$f" | tr -d ' \n')
+
+    if [ "$magic" != "00010000" ] && [ "$magic" != "74727565" ]; then
+        echo "!! $f is not a TrueType file (magic: $magic)"
+        exit 1
+    fi
 done
 echo "fonts ok"
