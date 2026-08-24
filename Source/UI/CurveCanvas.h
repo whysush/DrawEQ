@@ -64,7 +64,6 @@ private:
     DrawEQProcessor& processor;
     CurveWorker::UiSnapshot ui;
     CurveArray liveTarget {}, rawCurve {};
-    juce::Image sticker;
 
     Tool current = Tool::pencil;
     float brushOctaves = 0.5f;

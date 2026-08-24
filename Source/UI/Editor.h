@@ -63,7 +63,9 @@ private:
     juce::TextButton analyseButton { "Analyse" };
 
     // Painted regions, kept so live readouts can repaint without the canvas.
-    juce::Rectangle<int> titleArea, rightColumn, bottomStrip, plateArea, bandArea;
+    juce::Rectangle<int> titleArea, rightColumn, bottomStrip, plateArea, bandArea, artworkArea;
+
+    juce::Image artwork;
 
     /** Captions for the controls that do not draw their own. Collected during
         layout so paint() has nowhere to disagree with resized() about where

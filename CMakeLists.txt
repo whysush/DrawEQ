@@ -47,7 +47,6 @@ set (DRAWEQ_PLUGIN_SOURCES
     Source/UI/CanvasLayers/CurveLayer.cpp
     Source/UI/CanvasLayers/BandTokenLayer.cpp
     Source/UI/CanvasLayers/CursorLayer.cpp
-    Source/UI/CanvasLayers/StickerLayer.cpp
     Source/UI/Tools/DrawTools.cpp
     Source/UI/Controls/LookAndFeel.cpp
     Source/UI/Controls/Fader.cpp

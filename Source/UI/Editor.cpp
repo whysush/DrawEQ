@@ -2,15 +2,23 @@
 #include "../Core/Shapes.h"
 #include "../Processor.h"
 
+#if DRAWEQ_HAS_RESOURCES
+ #include "BinaryData.h"
+#endif
+
 namespace draweq
 {
 
 namespace
 {
     constexpr int kToolCell  = 34;
-    constexpr int kCaption   = 15;
+    constexpr int kCaption   = 13;
     constexpr int kRowHeight = Theme::Metrics::rowHeight;
-    constexpr int kBoxHeight = 24;
+    constexpr int kBoxHeight = 20;
+    constexpr int kFaderRow  = 23;
+
+    /** The artwork never disappears, however small the window gets. */
+    constexpr int kArtworkMinHeight = 44;
 
     const Tool kTools[] { Tool::pencil, Tool::line, Tool::smooth, Tool::erase, Tool::node };
 
@@ -45,6 +53,10 @@ DrawEQEditor::DrawEQEditor (DrawEQProcessor& p)
 {
     Theme::loadFonts();
     setLookAndFeel (&lookAndFeel);
+
+   #if DRAWEQ_HAS_RESOURCES
+    artwork = juce::ImageCache::getFromMemory (BinaryData::mascot_png, BinaryData::mascot_pngSize);
+   #endif
 
     addAndMakeVisible (canvas);
     addAndMakeVisible (slots);
@@ -349,6 +361,32 @@ void DrawEQEditor::paint (juce::Graphics& g)
         Theme::drawPixelBevel (g, rightColumn, true);
     }
 
+    // --- the artwork, in the chrome rather than over the plot --------------
+    if (artwork.isValid() && artworkArea.getHeight() >= 24 && artworkArea.getWidth() >= 24)
+    {
+        // Fitted to the space rather than stretched: the panel is not a
+        // reason to give the man a wider face.
+        const float ratio = float (artwork.getWidth()) / float (artwork.getHeight());
+        int h = artworkArea.getHeight() - 6;
+        int w = juce::roundToInt (float (h) * ratio);
+
+        if (w > artworkArea.getWidth() - 6)
+        {
+            w = artworkArea.getWidth() - 6;
+            h = juce::roundToInt (float (w) / ratio);
+        }
+
+        const auto frame = juce::Rectangle<int> (w, h).withCentre (artworkArea.getCentre());
+
+        g.setColour (Theme::Colour::of (Theme::Colour::recessed));
+        g.fillRect (frame.expanded (2));
+        g.drawImage (artwork, frame.toFloat(), juce::RectanglePlacement::stretchToFit);
+
+        // Framed like every other raised thing on the panel, so it reads as
+        // part of the instrument rather than pasted onto it.
+        Theme::drawPixelBevel (g, frame.expanded (2), true);
+    }
+
     for (const auto& c : captions)
         paintCaption (g, c.first, c.second);
 
@@ -423,36 +461,46 @@ void DrawEQEditor::resized()
         auto column = rightColumn.reduced (8, 6);
 
         analyseButton.setBounds (column.removeFromTop (kBoxHeight));
-        column.removeFromTop (3);
+        column.removeFromTop (2);
         analyserBox.setBounds (column.removeFromTop (kBoxHeight));
-        column.removeFromTop (9);
+        column.removeFromTop (7);
 
         auto labelled = [&] (juce::Component& c, const juce::String& text)
         {
             captions.emplace_back (column.removeFromTop (kCaption), text);
             c.setBounds (column.removeFromTop (kBoxHeight));
-            column.removeFromTop (6);
+            column.removeFromTop (4);
         };
 
         labelled (modeBox, "Mode");
         labelled (fidelityBox, "Fidelity");
         labelled (shapeBox, "Shape");
 
-        // The switches are pinned to the bottom first, so the faders divide
-        // what is actually left rather than leaving a void above them.
+        // The artwork is not optional, so its floor is reserved before the
+        // faders are given anything, and the faders give up height to it when
+        // the window is small. Sizing the artwork last instead - the obvious
+        // way round - squeezed it out of existence at the smallest window the
+        // constrainer allows.
+        column.removeFromTop (2);
+        Fader* faders[] { &bands, &mix, &output, &tilt, &smooth, &shift, &morph };
+        constexpr int kFaderCount = int (std::size (faders));
+
+        const int forSwitches = kBoxHeight + 10;
+        const int available = column.getHeight() - forSwitches - kArtworkMinHeight;
+        const int faderRow = juce::jlimit (14, kFaderRow, available / kFaderCount);
+
+        for (auto* f : faders)
+            f->setBounds (column.removeFromTop (faderRow));
+
         auto switches = column.removeFromBottom (kBoxHeight);
         const int cell = switches.getWidth() / 3;
         invert.setBounds (switches.removeFromLeft (cell));
         bypass.setBounds (switches.removeFromLeft (cell));
         live.setBounds   (switches);
 
-        column.removeFromBottom (8);
-
-        Fader* faders[] { &bands, &mix, &output, &tilt, &smooth, &shift, &morph };
-        const int each = column.getHeight() / int (std::size (faders));
-
-        for (auto* f : faders)
-            f->setBounds (column.removeFromTop (each));
+        column.removeFromBottom (5);
+        column.removeFromTop (5);
+        artworkArea = column;
     }
 
     plateArea = bounds.reduced (Theme::Metrics::gap, 4);
