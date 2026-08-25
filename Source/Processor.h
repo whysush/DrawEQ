@@ -10,6 +10,7 @@
 #include "DSP/ConvolutionEngine.h"
 #include "DSP/CurveWorker.h"
 #include "DSP/Smoothers.h"
+#include "DSP/TestTone.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -107,6 +108,7 @@ private:
     PresetBank  presets;
     CurveWorker curveWorker;
     Analyzer    spectrum;
+    TestTone    tone;
 
     BiquadCascade cascade;
     std::array<ConvolutionEngine, kMaxChannels> engines;
@@ -159,6 +161,8 @@ private:
     std::atomic<float>* pAnalyzer = nullptr;
     std::atomic<float>* pInvert = nullptr;
     std::atomic<float>* pLive = nullptr;
+    std::atomic<float>* pTone = nullptr;
+    std::atomic<float>* pToneFreq = nullptr;
 
     juce::AudioProcessorParameter* bypassParameter = nullptr;
 

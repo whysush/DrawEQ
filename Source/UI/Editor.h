@@ -54,11 +54,12 @@ private:
 
     std::array<std::unique_ptr<ToolButton>, 5> toolButtons;
 
-    juce::ComboBox modeBox, fidelityBox, shapeBox, analyserBox;
+    juce::ComboBox modeBox, fidelityBox, shapeBox, analyserBox, toneBox;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment,
-                                                                           analyserAttachment;
+                                                                           analyserAttachment,
+                                                                           toneAttachment;
 
-    Fader bands, mix, output, tilt, smooth, shift, morph;
+    Fader bands, mix, output, tilt, smooth, shift, morph, toneFreq;
     Checkbox   invert, bypass, live;
     juce::TextButton analyseButton { "Analyse" };
 

@@ -398,6 +398,15 @@ int main (int argc, char** argv)
                 if (p->getName (32).equalsIgnoreCase ("Mode"))
                     p->setValueNotifyingHost (1.0f);          // Analog
 
+            // The automation sweep above left the tone generator wherever its
+            // sine ended. It replaces the input by design, so with it on there
+            // is nothing of the host's signal left to compare against - bypass
+            // passes the *tone* through, which is correct and is checked
+            // separately below.
+            for (auto* p : plugin->getParameters())
+                if (p->getName (32).equalsIgnoreCase ("Tone"))
+                    p->setValueNotifyingHost (0.0f);
+
             // Something the filter would audibly change, so passing through
             // unaltered is a real result rather than a coincidence.
             for (auto* p : plugin->getParameters())
@@ -441,6 +450,71 @@ int main (int argc, char** argv)
             bypass->setValueNotifyingHost (0.0f);
             plugin->releaseResources();
         }
+    }
+
+    // -----------------------------------------------------------------------
+    section ("the audition tone replaces the input, and only when asked to");
+    {
+        plugin->prepareToPlay (48000.0, 256);
+
+        juce::AudioProcessorParameter* toneParam = nullptr;
+
+        for (auto* p : plugin->getParameters())
+            if (p->getName (32).equalsIgnoreCase ("Tone"))
+                toneParam = p;
+
+        check (toneParam != nullptr, "tone parameter is exposed to the host");
+
+        if (toneParam != nullptr)
+        {
+            // Everything back to default first. The sections above deliberately
+            // leave the gain staging wherever their sweeps ended, and measuring
+            // the tone through a maxed tilt and a maxed output gain would be
+            // measuring those rather than the tone.
+            for (auto* p : plugin->getParameters())
+                p->setValueNotifyingHost (p->getDefaultValue());
+
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (200);
+
+            juce::AudioBuffer<float> buffer (2, 256);
+            juce::MidiBuffer midi;
+
+            // Off: silence in, silence out. A plugin that hums when it is
+            // supposed to be idle would be unusable on an insert.
+            toneParam->setValueNotifyingHost (0.0f);
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (60);
+
+            float worst = 0.0f;
+
+            for (int n = 0; n < 20; ++n)
+            {
+                buffer.clear();
+                plugin->processBlock (buffer, midi);
+                worst = juce::jmax (worst, peakOf (buffer));
+            }
+
+            check (worst < 1.0e-6f, "silent in, silent out while the tone is off");
+
+            // On: something comes out of nothing, at a sane level.
+            toneParam->setValueNotifyingHost (1.0f / 3.0f);   // Sine
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (60);
+
+            float peak = 0.0f;
+
+            for (int n = 0; n < 20; ++n)
+            {
+                buffer.clear();
+                plugin->processBlock (buffer, midi);
+                peak = juce::jmax (peak, peakOf (buffer));
+            }
+
+            check (peak > 0.02f && peak < 1.0f, "the tone is audible and does not clip");
+            std::printf ("       tone peak: %.3f\n", peak);
+
+            toneParam->setValueNotifyingHost (0.0f);
+        }
+
+        plugin->releaseResources();
     }
 
     // -----------------------------------------------------------------------

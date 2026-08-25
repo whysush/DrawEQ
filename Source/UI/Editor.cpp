@@ -47,6 +47,7 @@ DrawEQEditor::DrawEQEditor (DrawEQProcessor& p)
       smooth (p.apvts, params::id::smooth,     "Smooth", 50),
       shift  (p.apvts, params::id::freqShift,  "Shift", 50),
       morph  (p.apvts, params::id::morph,      "Morph", 50),
+      toneFreq (p.apvts, params::id::toneFreq, "Tone",  50),
       invert (p.apvts, params::id::phaseInvert, "Inv"),
       bypass (p.apvts, params::id::bypass,      "Byp"),
       live   (p.apvts, params::id::liveFit,     "Live")
@@ -62,7 +63,7 @@ DrawEQEditor::DrawEQEditor (DrawEQProcessor& p)
     addAndMakeVisible (slots);
     addAndMakeVisible (status);
 
-    for (auto* f : { &bands, &mix, &output, &tilt, &smooth, &shift, &morph })
+    for (auto* f : { &bands, &mix, &output, &tilt, &smooth, &shift, &morph, &toneFreq })
         addAndMakeVisible (*f);
 
     for (auto* c : { &invert, &bypass, &live })
@@ -141,6 +142,13 @@ DrawEQEditor::DrawEQEditor (DrawEQProcessor& p)
     };
 
     addAndMakeVisible (shapeBox);
+
+    // The standalone has no input, so without this there is nothing to hear
+    // the filter working on.
+    toneBox.addItemList ({ "Off", "Sine", "Pink", "Sweep" }, 1);
+    addAndMakeVisible (toneBox);
+    toneAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+        p.apvts, params::id::testTone, toneBox);
 
     analyserBox.addItemList ({ "Off", "Pre", "Post", "Both" }, 1);
     addAndMakeVisible (analyserBox);
@@ -268,6 +276,9 @@ void DrawEQEditor::timerCallback()
         if (fidelityBox.getSelectedId() != matched)
             fidelityBox.setSelectedId (matched, juce::dontSendNotification);
     }
+
+    if (auto* v = processor.apvts.getRawParameterValue (params::id::testTone))
+        toneFreq.setEnabledLook (int (v->load()) == 1);   // sine only
 
     // The band under edit can move while it is being dragged on the canvas.
     if (! bandFreq.isMouseButtonDownAnywhere())
@@ -475,6 +486,7 @@ void DrawEQEditor::resized()
         labelled (modeBox, "Mode");
         labelled (fidelityBox, "Fidelity");
         labelled (shapeBox, "Shape");
+        labelled (toneBox, "Tone");
 
         // The artwork is not optional, so its floor is reserved before the
         // faders are given anything, and the faders give up height to it when
@@ -482,7 +494,7 @@ void DrawEQEditor::resized()
         // way round - squeezed it out of existence at the smallest window the
         // constrainer allows.
         column.removeFromTop (2);
-        Fader* faders[] { &bands, &mix, &output, &tilt, &smooth, &shift, &morph };
+        Fader* faders[] { &bands, &mix, &output, &tilt, &smooth, &shift, &morph, &toneFreq };
         constexpr int kFaderCount = int (std::size (faders));
 
         const int forSwitches = kBoxHeight + 10;

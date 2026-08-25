@@ -26,6 +26,8 @@ namespace id
     inline constexpr const char* analyzer    = "analyzer";
     inline constexpr const char* phaseInvert = "phaseInvert";
     inline constexpr const char* liveFit     = "liveFit";
+    inline constexpr const char* testTone    = "testTone";
+    inline constexpr const char* toneFreq    = "toneFreq";
 }
 
 enum class AnalyzerMode { off = 0, pre, post, both };

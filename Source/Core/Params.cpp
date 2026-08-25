@@ -89,6 +89,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (std::make_unique<AudioParameterBool> (
         ParameterID { id::liveFit, kVersion }, "Live", false));
 
+    // Off by default, and deliberately so: a plugin that makes noise the
+    // moment it is inserted would be a menace. It exists because the
+    // standalone has no input, and it is useful in a host for auditioning a
+    // curve against something known.
+    layout.add (std::make_unique<AudioParameterChoice> (
+        ParameterID { id::testTone, kVersion }, "Tone",
+        juce::StringArray { "Off", "Sine", "Pink", "Sweep" }, 0));
+
+    layout.add (std::make_unique<AudioParameterFloat> (
+        ParameterID { id::toneFreq, kVersion }, "Tone freq",
+        NormalisableRange<float> { 20.0f, 20000.0f, 0.0f, 0.25f }, 1000.0f,
+        juce::AudioParameterFloatAttributes().withLabel (" Hz")));
+
     return layout;
 }
 

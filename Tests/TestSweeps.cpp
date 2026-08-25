@@ -3,6 +3,7 @@
 #include "DSP/BiquadCascade.h"
 #include "DSP/ConvolutionEngine.h"
 #include "DSP/CurveWorker.h"
+#include "DSP/TestTone.h"
 #include <random>
 
 using namespace draweq;
@@ -229,4 +230,87 @@ TEST_CASE ("repeated prepare and release cycles are safe", "[sweep]")
     }
 
     REQUIRE (worker.publishCount() > 0);
+}
+
+TEST_CASE ("the audition source generates what it claims to", "[tone]")
+{
+    TestTone tone;
+    tone.prepare (48000.0);
+
+    juce::AudioBuffer<float> buffer (2, 512);
+
+    auto rms = [&buffer]
+    {
+        double sum = 0.0;
+
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+            sum += double (buffer.getReadPointer (0)[i]) * double (buffer.getReadPointer (0)[i]);
+
+        return std::sqrt (sum / double (buffer.getNumSamples()));
+    };
+
+    SECTION ("off leaves the buffer alone")
+    {
+        buffer.clear();
+        tone.process (buffer, 512, TestTone::Mode::off, 1000.0f);
+        REQUIRE (rms() < 1.0e-12);
+    }
+
+    SECTION ("every source produces finite audio at a sane level")
+    {
+        for (auto mode : { TestTone::Mode::sine, TestTone::Mode::pink, TestTone::Mode::sweep })
+        {
+            buffer.clear();
+
+            // Several blocks: a sweep needs time to get anywhere, and pink
+            // noise needs its filters to charge.
+            for (int n = 0; n < 20; ++n)
+                tone.process (buffer, 512, mode, 1000.0f);
+
+            for (int ch = 0; ch < 2; ++ch)
+                for (int i = 0; i < 512; ++i)
+                {
+                    const float v = buffer.getReadPointer (ch)[i];
+                    REQUIRE (std::isfinite (v));
+                    REQUIRE (std::abs (v) <= 1.0f);
+                }
+
+            INFO ("mode " << int (mode) << " rms " << rms());
+            REQUIRE (rms() > 0.01);    // audible
+            REQUIRE (rms() < 0.2);     // and not hot enough to clip a boost
+        }
+    }
+
+    SECTION ("the sine really is at the frequency asked for")
+    {
+        // Counting zero crossings is enough to catch the octave error that a
+        // stray factor of two in the phase increment would produce.
+        tone.prepare (48000.0);
+        buffer.clear();
+
+        constexpr float hz = 1000.0f;
+        int crossings = 0;
+        float previous = 0.0f;
+
+        for (int n = 0; n < 94; ++n)     // ~1 second at 512 samples
+        {
+            tone.process (buffer, 512, TestTone::Mode::sine, hz);
+
+            for (int i = 0; i < 512; ++i)
+            {
+                const float v = buffer.getReadPointer (0)[i];
+
+                if (previous <= 0.0f && v > 0.0f)
+                    ++crossings;
+
+                previous = v;
+            }
+        }
+
+        const double seconds = 94.0 * 512.0 / 48000.0;
+        const double measured = double (crossings) / seconds;
+
+        INFO ("measured " << measured << " Hz");
+        REQUIRE (std::abs (measured - double (hz)) < 5.0);
+    }
 }

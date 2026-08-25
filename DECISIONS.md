@@ -652,3 +652,49 @@ here. Either way, on modest hardware a 24-band cold fit can exceed the 50 ms
 budget. It runs on the worker thread with audio still playing through the
 previous filter, so the cost is latency before a committed curve is heard, not
 a dropout.
+
+---
+
+## An audition source, because the standalone has no input
+
+The standalone mutes its input to avoid a feedback loop, so there was nothing to
+hear the filter working on. `TestTone` generates a signal in place of the input,
+at the very top of the block, so everything downstream is unchanged: the
+analyser sees it pre and post, the dry path delays it, and mix and bypass behave
+exactly as they do on real audio.
+
+**Off by default**, deliberately. A plugin that makes noise the moment it is
+inserted would be a menace. It is also genuinely useful in a host, for
+auditioning a curve against something known.
+
+Three sources, and the choice of them matters:
+
+- **Sine**, at a frequency you can drag. This is the literal request, and it is
+  the right tool for judging one band - but it only tells you about one
+  frequency, which is why it is not the only option.
+- **Pink noise**, not white. Pink is what a spectrum analyser reads flat and
+  what an ear hears as even across the range; white noise is mostly treble and
+  leaves the bottom of the curve inaudible. Paul Kellet's three-pole
+  approximation, three multiply-adds.
+- **Log sweep**, 20 Hz to 20 kHz over eight seconds. Linear would spend seven of
+  those eight seconds above 2 kHz and say nothing about the bottom half of the
+  curve. This is the one that lets you *hear* a drawn curve as a shape.
+
+Level is fixed at -18 dBFS rather than given a control: loud enough to judge,
+quiet enough that a large boost does not clip on its way out.
+
+**Two things the host simulation caught**, both my test's fault rather than the
+code's, and both worth recording because they are easy to mistake for bugs:
+
+The bypass check started failing with a deviation of 0.425 - the tone's own
+amplitude. The automation sweep before it now leaves the tone on, and with the
+tone on there is no host signal left to compare against, because bypass passes
+the *tone* through. That is correct: bypass bypasses the filter, not the
+generator. The test turns the tone off first, and the behaviour is now pinned by
+its own check rather than left implicit.
+
+Then the tone measured 2.277 - clipping. Also the test: the section before it
+leaves tilt at maximum and the automation leaves the output gain wherever its
+sine ended, so it was measuring the gain staging rather than the tone. With
+every parameter returned to its default first it measures 0.126, which is the
+-18 dBFS it is specified at.

@@ -49,6 +49,8 @@ DrawEQProcessor::DrawEQProcessor()
     pAnalyzer = apvts.getRawParameterValue (params::id::analyzer);
     pInvert   = apvts.getRawParameterValue (params::id::phaseInvert);
     pLive     = apvts.getRawParameterValue (params::id::liveFit);
+    pTone     = apvts.getRawParameterValue (params::id::testTone);
+    pToneFreq = apvts.getRawParameterValue (params::id::toneFreq);
 
     bypassParameter = apvts.getParameter (params::id::bypass);
 
@@ -127,6 +129,7 @@ void DrawEQProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     activeMode = fadingMode = Mode (int (pMode->load()));
 
     spectrum.prepare (sampleRate);
+    tone.prepare (sampleRate);
 
     prepared.store (true, std::memory_order_release);
 
@@ -357,6 +360,10 @@ void DrawEQProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (! prepared.load (std::memory_order_acquire) || numSamples == 0 || nch == 0)
         return;
+
+    // Generated in place of the input, at the very top, so everything below
+    // treats it exactly as it would treat real audio.
+    tone.process (buffer, numSamples, TestTone::Mode (int (pTone->load())), pToneFreq->load());
 
     if (auto* incoming = curveWorker.ring().consume())
         adoptState (incoming);

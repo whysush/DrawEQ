@@ -5,3 +5,6 @@ build-*/
 .idea/
 *.user
 compile_commands.json
+
+# Downloaded CI artefacts - large, and reproducible from Actions.
+dist/
