@@ -698,3 +698,67 @@ leaves tilt at maximum and the automation leaves the output gain wherever its
 sine ended, so it was measuring the gain staging rather than the tone. With
 every parameter returned to its default first it measures 0.126, which is the
 -18 dBFS it is specified at.
+
+---
+
+## The analyser was reading a bin, not a band
+
+Reported as "the grey spectrum is very low, so manipulation is hard when you
+cannot see the original". It was, and the cause was a real defect rather than a
+display preference.
+
+Each display point took the **loudest single FFT bin** in its span. That is
+per-bin spectrum analysis, and it is wrong for this job in two ways at once. A
+bin covers a fixed slice of hertz, so a broadband signal spread across two
+thousand of them puts a fraction of a percent of its energy in any one - pink
+noise at -18 dBFS was drawing at about **-45 dB**, along the floor of a plate
+that only goes down to -24. And per-bin analysis of pink noise slopes at
+-3 dB/octave, which the code was papering over with a +4.5 dB/octave corrective
+tilt.
+
+What every EQ analyser actually does, and what this does now, is sum **energy
+per constant-Q band**. The bands widen with frequency exactly as pink noise's
+per-hertz energy falls, so pink reads flat with no corrective tilt at all - the
++4.5 dB/octave of CONTEXT.md 7.6 is gone, because it was compensating for the
+wrong analysis rather than for anything real.
+
+Getting there took two passes, and the second only became visible once the test
+measured the right thing:
+
+| | level | tilt over 5 octaves | scatter |
+|---|---|---|---|
+| per-bin maximum | ~-45 dB | (masked by the +4.5 dB/oct tilt) | - |
+| band energy, whole bins | +0.5 dB | **-4.07 dB** | 2.44 dB |
+| band energy, partial bins | -1.7 dB | **-1.11 dB** | 1.79 dB |
+
+The middle row rounded each band out to whole bin boundaries. That over-counts a
+narrow band far more than a wide one - a 13 Hz band at 1 kHz claiming four
+12 Hz bins is a 3x overcount, while a 135 Hz band at 10 kHz claiming thirteen is
+1.1x - so it landed as a **tilt across the whole display** rather than as a
+local error anyone would spot. Weighting each bin by how much of it actually
+falls inside the band removes it. The same expression handles a band narrower
+than a bin, so the special case for low frequencies disappeared too.
+
+The test was rewritten to measure systematic tilt and band-to-band scatter
+**separately**, because a single peak-to-peak number cannot tell a wrong
+calculation from the ordinary variance of one realisation of noise - and it was
+that separation, not the number itself, that exposed the -4 dB slope.
+
+The remaining 0.2 dB/octave is the pink generator's own approximation error, not
+the analyser.
+
+## Why a sweep moves and noise does not
+
+Also asked: why the sweep's display moves along the x axis when an EQ analyser
+normally shows something stable.
+
+Because a swept sine *is* a moving tone - one frequency at a time, changing
+continuously - and an analyser that did not show it moving would be lying. EQ
+analysers look stable because what people normally feed them is music or noise:
+broadband, and statistically the same from moment to moment. Pink is the source
+to use for a stable picture, and it is the one that reads flat.
+
+The sweep earns its place for the opposite reason. It is the only source that
+lets you *hear* a drawn curve as a shape, because it walks through the response
+one frequency at a time - which is exactly the technique used to test an EQ by
+sweeping a narrow boost across the spectrum.

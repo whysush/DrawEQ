@@ -9,6 +9,13 @@ namespace
 {
     constexpr float kFloorDb    = -100.0f;
     constexpr float kPeakFallDb = 40.0f;   // 60 dB in 1.5 s
+
+    /** Band energy is far below the signal's broadband level - the energy is
+        spread across the spectrum, so no single band holds much of it. This
+        lifts the display so that ordinary programme material sits in the upper
+        half of the plate rather than along its floor. Set by measuring pink
+        noise at -18 dBFS, not by taste. */
+    constexpr float kDisplayOffset = 42.0f;
 }
 
 void Analyzer::Ring::push (const float* const* channels, int numChannels, int numSamples) noexcept
@@ -60,14 +67,34 @@ void Analyzer::prepare (double sampleRate)
     preWindow.assign (std::size_t (kFftSize), 0.0f);
     postWindow.assign (std::size_t (kFftSize), 0.0f);
 
-    // Log display point -> nearest linear FFT bin, precomputed once. Below a
-    // few hundred Hz several display points share a bin; that is the honest
-    // resolution of a 4096-point transform and smoothing it would be a lie.
+    // Each display point covers a constant-Q band, and the band's *energy* is
+    // what gets displayed - not the level of one bin inside it.
+    //
+    // This is the difference between a spectrum plot and an RTA. A bin holds a
+    // fixed slice of hertz, so a broadband signal spread over two thousand of
+    // them puts a fraction of a percent of its energy in any one - which drew
+    // pink noise as a faint line along the floor. Summing the band gives the
+    // energy actually in that part of the spectrum, which is both the useful
+    // number and the one that makes pink read flat without a corrective tilt.
+    const double binHz = sr / double (kFftSize);
+    const double halfStep = std::pow (double (LogGrid::kFMax / LogGrid::kFMin),
+                                      0.5 / double (kPoints - 1));
+
     for (int i = 0; i < kPoints; ++i)
     {
-        const float hz  = pointToHz (i);
-        const int   bin = int (std::lround (double (hz) * kFftSize / sr));
-        binForPoint[std::size_t (i)] = std::clamp (bin, 1, kFftSize / 2);
+        const double hz = double (pointToHz (i));
+        const double lo = hz / halfStep;
+        const double hi = hz * halfStep;
+
+        auto& band = bands[std::size_t (i)];
+        band.loHz = float (lo);
+        band.hiHz = float (hi);
+
+        // Bin b is centred on b * binHz and owns half a bin either side, so the
+        // bins that can overlap this band run from lo - half to hi + half.
+        band.firstBin = std::clamp (int (std::floor (lo / binHz - 0.5)), 1, kFftSize / 2);
+        band.lastBin  = std::clamp (int (std::ceil (hi / binHz + 0.5)), band.firstBin,
+                                    kFftSize / 2);
     }
 
     reset();
@@ -132,6 +159,8 @@ void Analyzer::analyse (Ring& ring, std::vector<float>& window, std::array<float
         return;
     }
 
+    const double binHzF = sr / double (kFftSize);
+
     std::fill (fftBuffer.begin(), fftBuffer.end(), 0.0f);
 
     for (int i = 0; i < kFftSize; ++i)
@@ -144,29 +173,32 @@ void Analyzer::analyse (Ring& ring, std::vector<float>& window, std::array<float
 
     for (int i = 0; i < kPoints; ++i)
     {
-        const int   bin = binForPoint[std::size_t (i)];
-        const float hz  = pointToHz (i);
+        const auto& band = bands[std::size_t (i)];
 
-        // Above the point where one display step spans more than one bin, take
-        // the maximum across the span: a peak that falls between display points
-        // must not disappear.
-        int lo = bin, hi = bin;
+        float energy = 0.0f;
 
-        if (i > 0)              lo = std::min (lo, binForPoint[std::size_t (i - 1)] + 1);
-        if (i < kPoints - 1)    hi = std::max (hi, binForPoint[std::size_t (i + 1)] - 1);
+        for (int b = band.firstBin; b <= band.lastBin; ++b)
+        {
+            // Each bin contributes the fraction of itself that lies inside the
+            // band. A band narrower than a bin therefore takes a fraction of
+            // one, and a wide band takes whole bins plus two partial edges -
+            // the same expression covers both, with no step where the two
+            // regimes meet.
+            const float binLo = (float (b) - 0.5f) * float (binHzF);
+            const float binHi = (float (b) + 0.5f) * float (binHzF);
+            const float overlap = std::min (band.hiHz, binHi) - std::max (band.loHz, binLo);
 
-        lo = std::clamp (lo, 1, kFftSize / 2);
-        hi = std::clamp (std::max (hi, lo), 1, kFftSize / 2);
+            if (overlap <= 0.0f)
+                continue;
 
-        float mag = 0.0f;
+            const float mag = fftBuffer[std::size_t (b)] * norm;
+            energy += (overlap / float (binHzF)) * mag * mag;
+        }
 
-        for (int b = lo; b <= hi; ++b)
-            mag = std::max (mag, fftBuffer[std::size_t (b)]);
-
-        // +4.5 dB per octave so that pink noise, which is what music broadly
-        // looks like, reads as a flat line rather than a slope.
-        const float db = 20.0f * std::log10 (std::max (mag * norm, 1.0e-9f))
-                       + 4.5f * std::log2 (std::max (hz, 20.0f) / 1000.0f);
+        // No corrective tilt: summing constant-Q bands already makes pink noise
+        // read flat, and applying the +4.5 dB/octave of CONTEXT.md 7.6 on top
+        // of it would tilt the display the other way.
+        const float db = 10.0f * std::log10 (std::max (energy, 1.0e-18f)) + kDisplayOffset;
 
         const float shown = std::max (kFloorDb, db);
 

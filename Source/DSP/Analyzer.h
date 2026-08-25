@@ -82,7 +82,13 @@ private:
     std::array<float, kFftSize> hann {};
     std::vector<float> fftBuffer;          // 2 * kFftSize
     std::vector<float> preWindow, postWindow;
-    std::array<int, kPoints> binForPoint {};
+    /** Each display point is a constant-Q band, not a bin. The edges are kept
+        in hertz rather than rounded to whole bins, because rounding out to a
+        bin boundary over-counts a narrow band far more than a wide one - a
+        13 Hz band at 1 kHz would claim four bins - and that lands as a tilt
+        across the display rather than as an error you can see locally. */
+    struct Band { int firstBin, lastBin; float loHz, hiHz; };
+    std::array<Band, kPoints> bands {};
 
     Ring preRing, postRing;
     std::array<float, kPoints> preDisplay {}, postDisplay {}, postPeak {};

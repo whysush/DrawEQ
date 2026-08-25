@@ -4,6 +4,7 @@
 #include "DSP/ConvolutionEngine.h"
 #include "DSP/CurveWorker.h"
 #include "DSP/TestTone.h"
+#include "DSP/Analyzer.h"
 #include <random>
 
 using namespace draweq;
@@ -313,4 +314,87 @@ TEST_CASE ("the audition source generates what it claims to", "[tone]")
         INFO ("measured " << measured << " Hz");
         REQUIRE (std::abs (measured - double (hz)) < 5.0);
     }
+}
+
+TEST_CASE ("the analyser reads pink noise flat, at a level worth looking at", "[analyzer]")
+{
+    // The two properties that make a spectrum display usable, and the two that
+    // per-bin analysis gets wrong: a broadband signal must sit somewhere you
+    // can see it, and pink noise must read flat rather than sloping.
+    constexpr double sr = 48000.0;
+
+    Analyzer analyzer;
+    analyzer.prepare (sr);
+    analyzer.setEnabled (false, true);
+
+    TestTone tone;
+    tone.prepare (sr);
+
+    juce::AudioBuffer<float> buffer (1, 512);
+
+    // Two seconds of pink at the audition level, pushed through as the audio
+    // thread would.
+    for (int n = 0; n < 190; ++n)
+    {
+        buffer.clear();
+        tone.process (buffer, 512, TestTone::Mode::pink, 0.0f);
+
+        const float* channels[1] = { buffer.getReadPointer (0) };
+        analyzer.pushPost (channels, 1, 512);
+        analyzer.update (512.0f / float (sr));
+    }
+
+    const auto& spectrum = analyzer.postDb();
+
+    // Judged over the range the transform can actually resolve. Below a few
+    // hundred Hz a 4096-point FFT has less than a band's worth of resolution,
+    // and that limit is real rather than something to paper over.
+    // Tilt and scatter are measured separately. A systematic slope would mean
+    // the band maths is wrong; band-to-band scatter is just what one
+    // realisation of noise looks like, and no amount of correct maths removes
+    // it. Lumping them into one peak-to-peak number cannot tell them apart.
+    float sum = 0.0f, lowSum = 0.0f, highSum = 0.0f;
+    int counted = 0, lowCount = 0, highCount = 0;
+
+    for (int i = 0; i < Analyzer::kPoints; ++i)
+    {
+        const float hz = Analyzer::pointToHz (i);
+
+        if (hz < 500.0f || hz > 16000.0f)
+            continue;
+
+        sum += spectrum[std::size_t (i)];
+        ++counted;
+
+        if (hz < 2000.0f) { lowSum += spectrum[std::size_t (i)];  ++lowCount; }
+        if (hz > 6000.0f) { highSum += spectrum[std::size_t (i)]; ++highCount; }
+    }
+
+    const float mean = sum / float (counted);
+    const float tilt = highSum / float (highCount) - lowSum / float (lowCount);
+
+    float scatter = 0.0f;
+
+    for (int i = 0; i < Analyzer::kPoints; ++i)
+    {
+        const float hz = Analyzer::pointToHz (i);
+
+        if (hz >= 500.0f && hz <= 16000.0f)
+            scatter += (spectrum[std::size_t (i)] - mean) * (spectrum[std::size_t (i)] - mean);
+    }
+
+    scatter = std::sqrt (scatter / float (counted));
+
+    INFO ("pink reads " << mean << " dB, tilt " << tilt << " dB across the decade, scatter "
+          << scatter << " dB");
+
+    // Flat: the whole point of summing constant-Q bands. A per-bin analyser
+    // would slope by about -9 dB across this range.
+    REQUIRE (std::abs (tilt) < 3.0f);
+    REQUIRE (scatter < 5.0f);
+
+    // And visible. The plate spans -24..+24 dB, so anything below about -20
+    // is scraping the floor where it cannot be read against the curve.
+    REQUIRE (mean > -18.0f);
+    REQUIRE (mean < 12.0f);
 }
