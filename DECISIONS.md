@@ -762,3 +762,45 @@ The sweep earns its place for the opposite reason. It is the only source that
 lets you *hear* a drawn curve as a shape, because it walks through the response
 one frequency at a time - which is exactly the technique used to test an EQ by
 sweeping a narrow boost across the spectrum.
+
+## Why a tone drew as a hairline, and the smoothing that fixed it
+
+Follow-up to the above: "why is the sine wave so thin". Measured before
+answering, because a sine *should* be a spike and the question was whether it
+was the right spike.
+
+| tone | peak | read at | -3 dB width |
+|---|---|---|---|
+| 100 Hz | 13.6 dB | 105.5 Hz | 17 points, ~30 px |
+| 1 kHz | 23.3 dB | 994.7 Hz | 2 points, ~4 px |
+| 8 kHz | 25.8 dB | 7976 Hz | 1 point, ~2 px |
+
+Two things in that table. The width collapses with frequency because the
+analysis window's main lobe is a fixed width in *hertz* - about 47 Hz - which is
+0.6 of an octave at 100 Hz and less than a hundredth of one at 8 kHz. On a log
+axis that is a broad hump at the bottom and a two-pixel hairline at the top.
+Nothing is wrong with it; it is simply unreadable.
+
+And a 100 Hz tone read at 105.5 Hz - a 10 % error, which *was* wrong. Bands down
+there are far narrower than a bin, and treating the bin as a flat block gave
+every band inside it the same magnitude, so the widest of them - the highest in
+frequency - always won. Sampling the interpolated spectral density at each
+band's centre instead has no such preference.
+
+The fix for the width is what analysers do: smooth over a fixed span in octaves,
+about a sixth, over energy rather than decibels so the total is preserved.
+
+| | width at 1 kHz | width at 8 kHz | pink tilt | pink scatter |
+|---|---|---|---|---|
+| before | 2 points | 1 point | -1.10 dB | 1.78 dB |
+| after | 9 points | 9 points | **-0.43 dB** | **1.25 dB** |
+
+A tone now has the same visual width wherever it sits, noise settles, and the
+averaging cancels the bin-centre quantisation as a side effect: 100 Hz reads at
+99.93 Hz, 1 kHz at 999.3 Hz, 8 kHz at 7976 Hz.
+
+One measurement artefact worth recording, because it briefly looked like a
+regression: the test found the spike by taking the first maximum, and smoothing
+turns a one-point spike into a plateau - so it reported the plateau's left edge
+and appeared to move 8 kHz down by a semitone. The test takes the centroid now,
+which is where the spike actually reads.

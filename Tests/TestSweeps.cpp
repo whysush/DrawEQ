@@ -398,3 +398,74 @@ TEST_CASE ("the analyser reads pink noise flat, at a level worth looking at", "[
     REQUIRE (mean > -18.0f);
     REQUIRE (mean < 12.0f);
 }
+
+TEST_CASE ("a pure tone reads as a spike, at the right place and height", "[analyzer]")
+{
+    // A sine is one frequency, so it must draw as a narrow spike - the width is
+    // the analysis window's resolution and nothing else. What matters is that
+    // the spike lands on the right frequency and that summing bands has not
+    // lost the level.
+    constexpr double sr = 48000.0;
+
+    for (float hz : { 100.0f, 1000.0f, 8000.0f })
+    {
+        Analyzer analyzer;
+        analyzer.prepare (sr);
+        analyzer.setEnabled (false, true);
+
+        TestTone tone;
+        tone.prepare (sr);
+
+        juce::AudioBuffer<float> buffer (1, 512);
+
+        for (int n = 0; n < 190; ++n)
+        {
+            buffer.clear();
+            tone.process (buffer, 512, TestTone::Mode::sine, hz);
+            const float* channels[1] = { buffer.getReadPointer (0) };
+            analyzer.pushPost (channels, 1, 512);
+            analyzer.update (512.0f / float (sr));
+        }
+
+        const auto& spectrum = analyzer.postDb();
+
+        int peak = 0;
+
+        for (int i = 0; i < Analyzer::kPoints; ++i)
+            if (spectrum[std::size_t (i)] > spectrum[std::size_t (peak)])
+                peak = i;
+
+        int within3 = 0;
+
+        for (int i = 0; i < Analyzer::kPoints; ++i)
+            if (spectrum[std::size_t (i)] > spectrum[std::size_t (peak)] - 3.0f)
+                ++within3;
+
+        // Where the spike reads is its centroid, not its first maximum.
+        // Smoothing turns a one-point spike into a plateau, and taking the
+        // first sample of a plateau reports its left edge - which looked like
+        // a semitone of error that was not there.
+        double weightSum = 0.0, weighted = 0.0;
+
+        for (int i = 0; i < Analyzer::kPoints; ++i)
+        {
+            const double above = spectrum[std::size_t (i)] - (spectrum[std::size_t (peak)] - 6.0f);
+
+            if (above <= 0.0)
+                continue;
+
+            weightSum += above;
+            weighted += above * std::log2 (double (Analyzer::pointToHz (i)));
+        }
+
+        const float peakHz = float (std::exp2 (weighted / weightSum));
+        const float octavesOff = std::abs (std::log2 (peakHz / hz));
+
+        INFO (hz << " Hz -> peak " << spectrum[std::size_t (peak)] << " dB at " << peakHz
+              << " Hz, -3 dB width " << within3 << " of " << Analyzer::kPoints << " points");
+
+        REQUIRE (octavesOff < 0.09f);                        // lands where it was played
+        REQUIRE (spectrum[std::size_t (peak)] > -20.0f);     // visible on a -24..+24 plate
+        REQUIRE (within3 < Analyzer::kPoints / 10);          // a spike, not a smear
+    }
+}

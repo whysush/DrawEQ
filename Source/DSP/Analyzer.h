@@ -90,6 +90,15 @@ private:
     struct Band { int firstBin, lastBin; float loHz, hiHz; };
     std::array<Band, kPoints> bands {};
 
+    /** Band energies before display smoothing. */
+    std::array<float, kPoints> bandEnergy {};
+
+    /** Display smoothing, in points either side. The points are log-spaced, so
+        a fixed count is a fixed span in octaves - which is the whole point: it
+        gives a tone the same visual width wherever it sits, instead of a
+        hairline up top and a hump down the bottom. */
+    static constexpr int kSmoothingPoints = 4;   // about a sixth of an octave
+
     Ring preRing, postRing;
     std::array<float, kPoints> preDisplay {}, postDisplay {}, postPeak {};
 

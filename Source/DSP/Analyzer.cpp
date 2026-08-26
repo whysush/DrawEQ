@@ -177,23 +177,68 @@ void Analyzer::analyse (Ring& ring, std::vector<float>& window, std::array<float
 
         float energy = 0.0f;
 
-        for (int b = band.firstBin; b <= band.lastBin; ++b)
+        if (band.hiHz - band.loHz < float (binHzF))
         {
-            // Each bin contributes the fraction of itself that lies inside the
-            // band. A band narrower than a bin therefore takes a fraction of
-            // one, and a wide band takes whole bins plus two partial edges -
-            // the same expression covers both, with no step where the two
-            // regimes meet.
-            const float binLo = (float (b) - 0.5f) * float (binHzF);
-            const float binHi = (float (b) + 0.5f) * float (binHzF);
-            const float overlap = std::min (band.hiHz, binHi) - std::max (band.loHz, binLo);
+            // Narrower than a bin. Treating the bin as a flat block here biases
+            // the peak upward: every band inside one bin sees the same
+            // magnitude, and the widest of them - the highest in frequency -
+            // wins. That put a 100 Hz tone's peak at 110 Hz. Sampling the
+            // spectral density at the band's centre instead, interpolated
+            // between neighbouring bins, has no such preference.
+            const float centre = 0.5f * (band.loHz + band.hiHz);
+            const float pos = centre / float (binHzF);
+            const int   b0 = std::clamp (int (pos), 1, kFftSize / 2 - 1);
+            const float t = std::clamp (pos - float (b0), 0.0f, 1.0f);
 
-            if (overlap <= 0.0f)
-                continue;
+            const float m0 = fftBuffer[std::size_t (b0)] * norm;
+            const float m1 = fftBuffer[std::size_t (b0 + 1)] * norm;
 
-            const float mag = fftBuffer[std::size_t (b)] * norm;
-            energy += (overlap / float (binHzF)) * mag * mag;
+            const float density = (m0 * m0) * (1.0f - t) + (m1 * m1) * t;
+            energy = density * (band.hiHz - band.loHz) / float (binHzF);
         }
+        else
+        {
+            for (int b = band.firstBin; b <= band.lastBin; ++b)
+            {
+                // Each bin contributes the fraction of itself inside the band:
+                // whole bins in the middle, partial ones at the two edges.
+                const float binLo = (float (b) - 0.5f) * float (binHzF);
+                const float binHi = (float (b) + 0.5f) * float (binHzF);
+                const float overlap = std::min (band.hiHz, binHi) - std::max (band.loHz, binLo);
+
+                if (overlap <= 0.0f)
+                    continue;
+
+                const float mag = fftBuffer[std::size_t (b)] * norm;
+                energy += (overlap / float (binHzF)) * mag * mag;
+            }
+        }
+
+        bandEnergy[std::size_t (i)] = energy;
+    }
+
+    // Smoothed over a fixed span in octaves, and over *energy* rather than
+    // decibels so the total is preserved.
+    //
+    // Without this the window's main lobe - a fixed width in hertz - is 0.6 of
+    // an octave at 100 Hz and less than a hundredth of one at 8 kHz, so a tone
+    // draws as a broad hump at the bottom of the display and a two-pixel
+    // hairline at the top. Fixing the width in octaves is what makes the
+    // display read consistently across the range, and it settles the scatter
+    // of noise at the same time.
+    for (int i = 0; i < kPoints; ++i)
+    {
+        const int lo = std::max (0, i - kSmoothingPoints);
+        const int hi = std::min (kPoints - 1, i + kSmoothingPoints);
+
+        float sum = 0.0f;
+
+        for (int k = lo; k <= hi; ++k)
+            sum += bandEnergy[std::size_t (k)];
+
+        const float energy = sum / float (hi - lo + 1);
+        const float hz = pointToHz (i);
+        juce::ignoreUnused (hz);
 
         // No corrective tilt: summing constant-Q bands already makes pink noise
         // read flat, and applying the +4.5 dB/octave of CONTEXT.md 7.6 on top
