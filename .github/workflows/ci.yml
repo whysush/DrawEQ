@@ -9,6 +9,15 @@ jobs:
   build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+
+    # Declared here rather than on the signing steps themselves: a step's own
+    # env block is not in scope for that same step's if condition, so the
+    # skip-when-unset check would never fire. Absent secrets expand to the
+    # empty string, which is exactly the signal we want.
+    env:
+      SIGN_CERT_B64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+      SIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -102,6 +111,70 @@ jobs:
           else
             ./pluginval.exe --strictness-level 10 --validate "$VST3"
           fi
+
+      # ---- Windows packaging -------------------------------------------
+      #
+      # Everything below runs only on Windows and only after pluginval has
+      # passed, so nothing that failed validation can end up in an installer.
+
+      - name: Install WiX
+        if: runner.os == 'Windows'
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add -g WixToolset.UI.wixext/5.0.2
+
+      # Signing needs a certificate that only the repository owner has, so the
+      # secrets are absent on forks and pull requests by design. When they are
+      # absent this step is skipped and the build continues unsigned rather
+      # than failing - an unsigned build is still a usable build, it just warns
+      # on first run. Binaries are signed before packaging so the MSI carries
+      # signed payloads, and the MSI itself is signed afterwards.
+      - name: Sign binaries
+        if: runner.os == 'Windows' && env.SIGN_CERT_B64 != ''
+        shell: pwsh
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "sign.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGN_CERT_B64))
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" |
+                      Sort-Object FullName -Descending | Select-Object -First 1
+          # The timestamp is not optional in practice: without one the
+          # signature stops verifying the day the certificate expires.
+          & $signtool.FullName sign /f $pfx /p $env:SIGN_CERT_PASSWORD `
+            /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 `
+            "build/DrawEQ_artefacts/RelWithDebInfo/VST3/DrawEQ.vst3/Contents/x86_64-win/DrawEQ.vst3" `
+            "build/DrawEQ_artefacts/RelWithDebInfo/Standalone/DrawEQ.exe"
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
+          Remove-Item $pfx -Force
+
+      - name: Build MSI
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          ./Installer/build-msi.sh \
+            "build/DrawEQ_artefacts/RelWithDebInfo/VST3/DrawEQ.vst3" \
+            "build/DrawEQ_artefacts/RelWithDebInfo/Standalone/DrawEQ.exe" \
+            "DrawEQ.msi"
+
+      - name: Sign MSI
+        if: runner.os == 'Windows' && env.SIGN_CERT_B64 != ''
+        shell: pwsh
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "sign.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGN_CERT_B64))
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" |
+                      Sort-Object FullName -Descending | Select-Object -First 1
+          & $signtool.FullName sign /f $pfx /p $env:SIGN_CERT_PASSWORD `
+            /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "DrawEQ.msi"
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
+          Remove-Item $pfx -Force
+
+      - name: Upload installer
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DrawEQ-Windows-Installer
+          path: DrawEQ.msi
+          if-no-files-found: error
 
       - name: Upload VST3
         uses: actions/upload-artifact@v4

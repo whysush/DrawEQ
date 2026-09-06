@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- MSI installer for DrawEQ.
+
+     Two things are worth knowing before editing this file.
+
+     First, the VST3 install path is not hard-coded. CommonFiles64Folder is an
+     MSI standard directory that Windows resolves to C:\Program Files\Common
+     Files at install time, and MSI creates every parent directory a component
+     needs. So the VST3 folder underneath it is created when it is absent and
+     reused when it is not - no custom action, no directory probing.
+
+     Second, UpgradeCode is the product's identity across all versions and must
+     never change. ProductVersion changing plus UpgradeCode staying put is what
+     makes an install of 0.9.1 replace 0.9.0 rather than sit beside it. -->
+
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="DrawEQ"
+           Manufacturer="Bludwinder"
+           Version="$(var.Version)"
+           UpgradeCode="D68E0293-D496-4695-9E4E-D51D4210080F"
+           Scope="perMachine"
+           Compressed="yes"
+           InstallerVersion="500">
+
+    <SummaryInformation Description="DrawEQ - draw the curve you want to hear"
+                        Manufacturer="Bludwinder" />
+
+    <!-- Removes the older build before laying down the new one, so a stale DLL
+         can never survive an upgrade. -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of DrawEQ is already installed. Remove it first if you meant to go back." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/whysush/DrawEQ" />
+    <Property Id="ARPCONTACT" Value="Bludwinder" />
+
+    <!-- x64 only. JUCE builds a 64-bit VST3 and every current Windows host
+         loads 64-bit plugins; refusing 32-bit up front beats installing a DLL
+         that silently never loads. -->
+    <Launch Condition="VersionNT64"
+            Message="DrawEQ is 64-bit and needs a 64-bit version of Windows." />
+
+    <!-- C:\Program Files\Common Files\VST3\DrawEQ.vst3\Contents\... -->
+    <StandardDirectory Id="CommonFiles64Folder">
+      <Directory Id="Vst3Root" Name="VST3">
+        <Directory Id="BundleDir" Name="DrawEQ.vst3">
+          <Directory Id="ContentsDir" Name="Contents">
+            <Directory Id="ArchDir" Name="x86_64-win" />
+            <Directory Id="ResourcesDir" Name="Resources" />
+          </Directory>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="AppDir" Name="DrawEQ" />
+    </StandardDirectory>
+
+    <!-- The bundle folder and the DLL inside it share the name DrawEQ.vst3.
+         That is the VST3 layout, not a mistake. -->
+    <ComponentGroup Id="Vst3Files">
+      <Component Directory="ArchDir" Bitness="always64">
+        <File Id="Vst3Binary"
+              Source="$(var.Vst3BundleDir)\Contents\x86_64-win\DrawEQ.vst3"
+              KeyPath="yes" />
+      </Component>
+      <Component Directory="ResourcesDir" Bitness="always64">
+        <File Id="ModuleInfo"
+              Source="$(var.Vst3BundleDir)\Contents\Resources\moduleinfo.json"
+              KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="StandaloneFiles">
+      <Component Directory="AppDir" Bitness="always64">
+        <File Id="StandaloneExe" Source="$(var.StandaloneExe)" KeyPath="yes" />
+        <!-- Sits directly in the Start Menu root, which spares us a folder to
+             create and then remember to remove on uninstall. -->
+        <Shortcut Id="StartMenuShortcut"
+                  Directory="ProgramMenuFolder"
+                  Name="DrawEQ"
+                  Description="DrawEQ standalone"
+                  WorkingDirectory="AppDir"
+                  Advertise="no" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- AllowAbsent="no" on the plugin: someone who unticks the one thing a
+         host can load ends up with an install that does nothing. -->
+    <Feature Id="Vst3Plugin"
+             Title="VST3 plugin"
+             Description="Installs DrawEQ.vst3 for FL Studio, Ableton, Reaper and any other VST3 host."
+             Level="1"
+             AllowAbsent="no">
+      <ComponentGroupRef Id="Vst3Files" />
+    </Feature>
+
+    <Feature Id="StandaloneApp"
+             Title="Standalone app"
+             Description="Installs DrawEQ.exe, which runs on its own without a host."
+             Level="1">
+      <ComponentGroupRef Id="StandaloneFiles" />
+    </Feature>
+
+    <ui:WixUI Id="WixUI_FeatureTree" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
+
+  </Package>
+</Wix>
