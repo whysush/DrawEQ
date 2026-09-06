@@ -1,0 +1,48 @@
+{
+  "Name": "DrawEQ",
+  "Version": "0.9.0",
+  "Factory Info": {
+    "Vendor": "Bludwinder",
+    "URL": "",
+    "E-Mail": "",
+    "Flags": {
+      "Unicode": true,
+      "Classes Discardable": false,
+      "Component Non Discardable": false,
+    },
+  },
+  "Classes": [
+    {
+      "CID": "ABCDEF019182FAEB426C647744727771",
+      "Category": "Audio Module Class",
+      "Name": "DrawEQ",
+      "Vendor": "Bludwinder",
+      "Version": "0.9.0",
+      "SDKVersion": "VST 3.7.12",
+      "Sub Categories": [
+        "Fx",
+        "EQ",
+      ],
+      "Class Flags": 0,
+      "Cardinality": 2147483647,
+      "Snapshots": [
+      ],
+    },
+    {
+      "CID": "ABCDEF011234ABCD426C647744727771",
+      "Category": "Component Controller Class",
+      "Name": "DrawEQ",
+      "Vendor": "Bludwinder",
+      "Version": "0.9.0",
+      "SDKVersion": "VST 3.7.12",
+      "Sub Categories": [
+        "Fx",
+        "EQ",
+      ],
+      "Class Flags": 0,
+      "Cardinality": 2147483647,
+      "Snapshots": [
+      ],
+    },
+  ],
+}

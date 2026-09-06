@@ -1,0 +1,62 @@
+DrawEQ - by Bludwinder
+======================
+
+WHAT IS HERE
+  DrawEQ.vst3     the plugin (a FOLDER, not a file - copy the whole thing)
+  DrawEQ.exe      standalone version, for testing without a DAW
+
+INSTALL FOR FL STUDIO
+
+  1. Copy the DrawEQ.vst3 FOLDER to:
+         C:\Program Files\Common Files\VST3\
+     Copy the folder itself. Do not open it and copy what is inside.
+     Windows will ask for administrator permission. Allow it.
+
+  2. Start FL Studio. It must be the 64-bit version - this plugin is x64.
+
+  3. Options > Manage plugins
+
+  4. Check the "Plugin search paths" list on the left includes
+         C:\Program Files\Common Files\VST3
+     It is there by default. If not, click the folder icon and add it.
+
+  5. Tick "Verify plugins", then click "Find installed plugins" at the top.
+     Wait for the scan. DrawEQ appears in the list, and new finds are
+     highlighted.
+
+  6. Optional but useful: click the star next to DrawEQ so it shows up in
+     the browser's Plugin database > Effects favourites.
+
+USING IT
+
+  7. Press F9 for the mixer.
+
+  8. Click a mixer track - the one your sound is on, or the Master.
+
+  9. On the right of the mixer is the effects rack: a column of slots
+     reading "(empty)". Click the arrow on an empty slot.
+
+  10. Choose:  VST3 > Bludwinder > DrawEQ
+      (or find it under "All plugins" / your favourites if you starred it)
+
+  11. The interface opens. Draw on the dark plate with the pencil.
+
+IF IT DOES NOT APPEAR
+  This build uses the shared Microsoft Visual C++ runtime, so the machine
+  needs the "Microsoft Visual C++ 2015-2022 Redistributable (x64)".
+  Most machines already have it - FL Studio installs it - but if the plugin
+  is missing after a rescan, that is the first thing to check:
+
+      https://aka.ms/vs/17/release/vc_redist.x64.exe
+
+  Run DrawEQ.exe first as a quick test. If the standalone will not start
+  either, it is the runtime and not FL.
+
+FIRST THING TO TRY
+  The plugin makes no sound of its own on an empty channel. To hear it
+  working right away, set TONE (right-hand column) to Pink. That gives a
+  flat spectrum you can draw against. Sweep is the one that lets you hear
+  the shape of a curve.
+
+  Draw on the dark plate with the pencil. Release the mouse and the filter
+  snaps to what you drew.

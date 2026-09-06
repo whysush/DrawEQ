@@ -5,10 +5,11 @@ namespace draweq
 
 namespace
 {
-    /** The analyser reads in absolute dBFS; the canvas is a relative dB scale.
-        Anchoring -18 dBFS to the 0 dB line puts a normal mix in the middle of
-        the plot without any auto-ranging for the eye to chase. */
-    constexpr float kReference = -18.0f;
+    /** None. The analyser already reports decibels relative to this plot's zero
+        line - it applies its own display offset when it sums band energy, and
+        a second one here simply added itself to the first. It did: the spectrum
+        drew eighteen decibels high, pinned along the top of the plate. */
+    constexpr float kReference = 0.0f;
 
     juce::Path buildPath (const std::array<float, Analyzer::kPoints>& data,
                           const CanvasContext& ctx, bool close)

@@ -84,6 +84,36 @@ int main (int argc, char** argv)
     // without this the plot line has nothing to draw yet.
     juce::MessageManager::getInstance()->runDispatchLoopUntil (600);
 
+    // Then actually run audio through it, so the spectrum in the picture is
+    // one the plugin measured rather than one drawn for the picture. Pink,
+    // because that is what the analyser is calibrated to read flat.
+    if (which != "silent")
+    {
+        if (auto* toneParam = processor.apvts.getParameter (draweq::params::id::testTone))
+            toneParam->setValueNotifyingHost (2.0f / 3.0f);      // Pink
+
+        // Exactly the block size prepareToPlay was given. A host never sends
+        // more than it promised and the processor sizes its scratch buffers to
+        // that promise, so feeding it a larger block corrupts the heap - which
+        // is precisely what this tool did on the first attempt.
+        constexpr int blockSize = 128;
+
+        juce::AudioBuffer<float> block (2, blockSize);
+        juce::MidiBuffer midi;
+
+        for (int i = 0; i < 340; ++i)
+        {
+            block.clear();
+            processor.processBlock (block, midi);
+
+            if (i % 8 == 0)
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (16);
+        }
+
+        if (auto* toneParam = processor.apvts.getParameter (draweq::params::id::testTone))
+            toneParam->setValueNotifyingHost (0.0f);
+    }
+
     const auto image = editor->createComponentSnapshot (editor->getLocalBounds(), true);
 
     juce::File output (juce::File::getCurrentWorkingDirectory().getChildFile (outputPath));
