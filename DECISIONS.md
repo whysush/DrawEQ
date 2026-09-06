@@ -804,3 +804,55 @@ regression: the test found the spike by taking the first maximum, and smoothing
 turns a one-point spike into a plateau - so it reported the plateau's left edge
 and appeared to move 8 kHz down by a semitone. The test takes the centroid now,
 which is where the spike actually reads.
+
+---
+
+## Packaging for Windows
+
+The installer is an MSI built with WiX. The requirement was that it place the
+plugin in `C:\Program Files\Common Files\VST3` and create that folder when it
+is missing, and the interesting part is that none of it needed writing.
+`CommonFiles64Folder` is a standard MSI directory that Windows resolves at
+install time, and MSI creates every parent directory a component needs. So the
+path is correct on machines that redirect Program Files, and the folder appears
+when absent, with no custom action and no probing. A hand-rolled installer
+would have had to get both of those right by hand.
+
+The standalone is a second, optional feature rather than a second installer.
+The plugin feature is marked `AllowAbsent="no"`: unticking the only thing a
+host can load leaves an install that does nothing.
+
+WiX cannot be run on Linux. It says so, and it is not being modest - a build
+here fails on `Directory/@Name="VST3"` with *is not a relative path*, and a
+minimal package with one file and one plain directory name fails the same way.
+So the MSI is built in the Windows CI job, which is where the binaries it packs
+already are, and `build-msi.sh` routes every path through `cygpath` because
+`wix.exe` is a native program and cannot read the `/d/a/...` paths Git Bash
+hands it.
+
+Packaging runs after pluginval, so nothing that failed validation can reach an
+installer, and the release job publishes those same artefacts rather than
+building the source a second time. A release that ships a different binary from
+the one that was tested is not a tested release.
+
+### Signing
+
+The binaries are unsigned, and this is not something the build can fix. A
+signature that quiets SmartScreen needs a certificate issued by a certificate
+authority against a verified legal identity - it is a purchase and an identity
+check, renewed annually. Self-signing is not a cheaper version of this; it
+produces a signature no other machine trusts, so the warning stays and the only
+thing gained is a false sense of having handled it.
+
+What is in the repository is the half that can be built: CI signs the plugin,
+the standalone and the MSI, in that order, when `WINDOWS_CERT_BASE64` and
+`WINDOWS_CERT_PASSWORD` exist, and skips signing when they do not. Absent
+secrets expand to the empty string, so forks and pull requests - which never
+receive secrets - build unsigned instead of failing. Every signature is
+timestamped, without which it would stop verifying the day the certificate
+expires rather than continuing to vouch for code signed while it was valid.
+
+One scoping detail that cost a step: the secrets are declared as job-level
+`env` rather than on the signing steps. A step's own `env` block is not in
+scope for that same step's `if`, so the skip-when-unset condition would have
+read an empty variable every time and never run at all.

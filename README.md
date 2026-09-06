@@ -21,6 +21,47 @@ departs from it, and why, is [DECISIONS.md](DECISIONS.md).
 
 ---
 
+## Installing on Windows
+
+Grab `DrawEQ.msi` from the [latest
+release](https://github.com/whysush/DrawEQ/releases) and run it. It installs
+the plugin to `C:\Program Files\Common Files\VST3`, creating that folder if
+your machine does not already have it, and offers the standalone app as an
+optional extra.
+
+Windows will show a blue "Windows protected your PC" box first, because the
+installer is not signed by a certificate authority — see
+[Code signing](#code-signing) for why. Click **More info**, then **Run
+anyway**.
+
+Then point your host at it:
+
+- **FL Studio** — Options → Manage plugins → set the VST3 search path to
+  `C:\Program Files\Common Files\VST3` if it is not there already, then
+  **Find more plugins**. DrawEQ appears under Effects.
+- **Ableton, Reaper, Bitwig, Studio One** — rescan plugins; the Common Files
+  path is scanned by default.
+
+Prefer to place the folder yourself? The release also carries
+`DrawEQ-Windows-VST3.zip` — unzip it and drop `DrawEQ.vst3` into any folder
+your host scans.
+
+### Code signing
+
+Release binaries are unsigned, so Windows SmartScreen warns on first run. That
+is a statement about paperwork rather than about the code: a signature that
+suppresses the warning requires a code-signing certificate issued by a
+certificate authority against a verified legal identity, which costs money
+annually and cannot be self-issued. A self-signed certificate does not help —
+it satisfies nobody's trust store but your own.
+
+The build is ready for one whenever there is one. CI signs the plugin, the
+standalone and the installer, with timestamps, if `WINDOWS_CERT_BASE64` and
+`WINDOWS_CERT_PASSWORD` are set in the repository secrets, and skips signing
+entirely when they are absent.
+
+---
+
 ## Building
 
 Needs CMake 3.22+ and a C++20 compiler. JUCE 8.0.9, Eigen 3.4 and Catch2 v3 are

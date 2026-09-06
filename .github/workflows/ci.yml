@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
 
 jobs:
@@ -189,3 +190,36 @@ jobs:
           name: DrawEQ-${{ matrix.name }}-Standalone
           path: build/DrawEQ_artefacts/RelWithDebInfo/Standalone
           if-no-files-found: error
+
+  # Tag a commit v0.9.0 and push the tag, and the artefacts that job just
+  # validated become a public download. Nothing is rebuilt here: the release
+  # carries the exact binaries pluginval passed, not a second build of the
+  # same source that nobody checked.
+  release:
+    name: Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: DrawEQ-Windows-*
+          path: artefacts
+
+      # A zip beside the installer, for anyone who would rather drop the
+      # folder into their own VST3 directory than run an installer.
+      - name: Package the plugin folder
+        run: |
+          cd artefacts/DrawEQ-Windows-VST3
+          zip -qr ../../DrawEQ-Windows-VST3.zip DrawEQ.vst3
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            artefacts/DrawEQ-Windows-Installer/DrawEQ.msi
+            DrawEQ-Windows-VST3.zip
