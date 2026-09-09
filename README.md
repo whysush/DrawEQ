@@ -127,7 +127,7 @@ DrawEQ is free, and it's staying free. I built it because I wanted it to exist
 and nobody was going to build it for me.
 
 That said — if it ends up on a mix you're proud of, and you feel like throwing
-a couple of quid at it, the link's there and I'd appreciate it more than you'd
+a couple of bucks at it, the link's there and I'd appreciate it more than you'd
 think. If not, genuinely, no hard feelings. Use it, enjoy it, and tell me what
 breaks.
 
