@@ -1,8 +1,7 @@
+<h1 align="center">DrawEQ</h1>
+
 <p align="center">
-  <h1 align="center">DrawEQ</h1>
-  <p align="center">
-    <b>Draw the frequency response you want. The plugin figures out how to be it.</b>
-  </p>
+  <b>Draw the frequency response you want. The plugin figures out how to be it.</b>
 </p>
 
 <p align="center">
