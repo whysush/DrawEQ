@@ -161,6 +161,36 @@ target_link_libraries (DrawEQSnapshot PRIVATE
     juce::juce_recommended_config_flags
     juce::juce_recommended_warning_flags)
 
+# The same idea as DrawEQSnapshot, one step further: a folder of frames rather
+# than a still, because what the plugin does is respond while you draw and no
+# single picture shows that. Tools/make_gifs.py turns the frames into a GIF.
+juce_add_console_app (DrawEQFrames)
+
+target_sources (DrawEQFrames PRIVATE
+    Tools/RenderFrames.cpp
+    ${DRAWEQ_DSP_SOURCES}
+    ${DRAWEQ_PLUGIN_SOURCES})
+
+target_compile_definitions (DrawEQFrames PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_STANDALONE_APPLICATION=1
+    JUCE_MODAL_LOOPS_PERMITTED=1
+    JUCE_REPORT_APP_USAGE=0
+    DRAWEQ_HAS_RESOURCES=$<IF:$<BOOL:${DRAWEQ_RESOURCES_PRESENT}>,1,0>)
+
+target_include_directories (DrawEQFrames PRIVATE Source)
+
+target_link_libraries (DrawEQFrames PRIVATE
+    DrawEQResources
+    draweq_eigen
+    juce::juce_audio_utils
+    juce::juce_audio_processors
+    juce::juce_dsp
+    juce::juce_gui_basics
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags)
+
 # Loads the built VST3 through JUCE's own VST3 host and drives it the way a
 # DAW would. Needs the plugin built first.
 juce_add_console_app (DrawEQHostSim)
