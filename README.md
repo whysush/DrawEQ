@@ -238,10 +238,10 @@ things. The audio thread never allocates, never locks, never destroys, and
 
 ---
 
-Want the long version? [CONTEXT.md](CONTEXT.md) is the original specification,
-and [DECISIONS.md](DECISIONS.md) is every place the implementation departed
-from it, with the reasoning and the measurements that prompted it. That second
-file is the honest one. The bugs are in there too.
+Want the long version? [DECISIONS.md](DECISIONS.md) is every place the
+implementation departed from the original design, with the reasoning and the
+measurements that prompted it. It's the honest file. The bugs are in there
+too.
 
 Built with [JUCE](https://juce.com) and [Eigen](https://eigen.tuxfamily.org).
 Typefaces are JetBrains Mono and Space Grotesk, both SIL OFL.

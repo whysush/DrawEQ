@@ -1,8 +1,10 @@
 # Decisions, deviations and open questions
 
-CONTEXT.md is the specification. Where the implementation departs from it, or
-where the spec was ambiguous enough that a choice had to be made, it is recorded
-here with the reasoning. Rule 10 says to ask rather than guess; these are the
+This project was built from a written specification. Where the implementation
+departs from that spec, or where the spec was ambiguous enough that a choice had
+to be made, it is recorded here with the reasoning. Section references below
+("CONTEXT.md 11" and the like) point into that original document, which is not
+published here. Rule 10 says to ask rather than guess; these are the
 places where a decision was needed to keep building, and each one is reversible.
 
 ---
