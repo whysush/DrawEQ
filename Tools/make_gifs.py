@@ -29,6 +29,12 @@ def main() -> int:
     ap.add_argument("--pause", action="append", default=[],
                     help="INDEX:MS - hold a specific frame longer")
     ap.add_argument("--colors", type=int, default=128)
+    ap.add_argument("--dither", action="store_true",
+                    help="Floyd-Steinberg. Off by default: the analyser is "
+                         "driven by noise, and dithering noise scatters "
+                         "changed pixels across frames that are otherwise "
+                         "identical, which is exactly what a GIF cannot "
+                         "compress")
     ap.add_argument("--stride", type=int, default=1,
                     help="keep every Nth frame - a smooth sweep does not need "
                          "every step, and dropping half the frames halves the "
@@ -46,21 +52,28 @@ def main() -> int:
         height = round(im.height * args.width / im.width)
         frames.append(im.resize((args.width, height), Image.LANCZOS))
 
-    # One palette for the whole animation, built from a strip of evenly spaced
-    # frames so it covers the colours the animation actually reaches rather
-    # than only those in frame zero - the fitted line and the band markers do
-    # not exist until near the end.
-    step = max(1, len(frames) // 12)
+    # One palette for the whole animation, built from several evenly spaced
+    # frames rather than from frame zero alone - the fitted line and the band
+    # markers do not exist until near the end, and a palette that has never
+    # seen them renders them in whatever it does have.
+    #
+    # The frames are stacked at full size. An earlier version squashed each one
+    # to an 8px strip to keep the sample small, which averaged neighbouring
+    # pixels together and handed the quantiser colours that appear nowhere in
+    # the animation: the palette came out sepia and every accent in the
+    # interface - the white ghost line, the blue plot, the orange controls -
+    # was mapped to the nearest muddy brown.
+    step = max(1, len(frames) // 8)
     rows = list(range(0, len(frames), step))
-    sample = Image.new("RGB", (args.width, len(rows) * 8))
+    sample = Image.new("RGB", (frames[0].width, frames[0].height * len(rows)))
 
     for row, i in enumerate(rows):
-        sample.paste(frames[i].resize((args.width, 8), Image.LANCZOS), (0, row * 8))
+        sample.paste(frames[i], (0, row * frames[0].height))
 
     palette = sample.quantize(colors=args.colors, method=Image.MEDIANCUT)
 
-    quantised = [f.quantize(palette=palette, dither=Image.FLOYDSTEINBERG)
-                 for f in frames]
+    dither = Image.FLOYDSTEINBERG if args.dither else Image.NONE
+    quantised = [f.quantize(palette=palette, dither=dither) for f in frames]
 
     durations = [args.frame] * len(quantised)
     durations[0] = args.hold_first

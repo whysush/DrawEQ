@@ -2,19 +2,32 @@
     Renders an animated sequence of editor frames to a folder of PNGs, which
     Tools/make_gifs.py then assembles into a GIF.
 
-    This is RenderUI's sibling, and it exists for the same reason: to show the
-    interface without a host, a window or an audio device. The difference is
-    that a still cannot show the thing DrawEQ actually does, which is respond
-    while you draw. So this drives the model a step at a time and snapshots
-    between steps.
+    This is RenderUI's sibling and exists for the same reason - to show the
+    interface without a host, a window or an audio device - but a still cannot
+    show the thing DrawEQ actually does, which is respond while you draw.
 
-        DrawEQFrames <output-dir> [draw|morph]
+        DrawEQFrames <output-dir> [sketch|notch]
+
+    Two decisions are worth knowing about.
+
+    The gesture is delivered as real mouse events through CurveCanvas rather
+    than by poking CurveModel directly. That costs a little setup and buys a
+    lot: the brush, the tool state, the ghost line and the crosshair readout
+    all behave exactly as they do under a hand, so the recording cannot drift
+    away from the product.
+
+    And the waypoints are in canvas pixels, not hertz and decibels. The canvas
+    converts pixels to frequency itself, so driving it in pixels and drawing
+    the cursor at those same pixels keeps the two registered by construction -
+    there is no second copy of the mapping to disagree with the first.
 
     Pink noise runs throughout, because a spectrum drawn for the picture would
     be a lie and the analyser is calibrated to read pink as flat.
 */
 
 #include "../Source/Processor.h"
+#include "../Source/UI/Controls/ToolIcons.h"
+#include "../Source/UI/CurveCanvas.h"
 #include "../Source/UI/Editor.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -23,24 +36,88 @@
 
 namespace
 {
-struct Point { float hz, db; };
+/** A gesture waypoint in canvas-relative coordinates, both 0..1. y = 0.5 is
+    the zero-decibel line, so 0.25 is a lift and 0.75 a cut. */
+struct Way { float x, y; };
 
-/** The curve the "draw" animation traces: a low lift, a boxy-midrange scoop
-    and an air shelf - the shape someone actually reaches for, rather than one
-    chosen to look impressive. */
-const std::vector<Point> kStroke
+/** A broad tonal shape: low lift, boxy-midrange scoop, air shelf. The curve
+    somebody actually reaches for, rather than one chosen to look impressive. */
+const std::vector<Way> kSketch
 {
-    {   20.0f,  0.0f }, {   32.0f,  4.5f }, {   48.0f,  7.5f }, {   72.0f,  6.5f },
-    {  110.0f,  4.0f }, {  170.0f,  1.0f }, {  260.0f, -2.0f }, {  380.0f, -5.5f },
-    {  520.0f, -8.0f }, {  700.0f, -9.5f }, {  900.0f, -9.0f }, { 1200.0f, -6.5f },
-    { 1800.0f, -3.0f }, { 2600.0f,  0.0f }, { 3600.0f,  2.5f }, { 5000.0f,  4.5f },
-    { 7000.0f,  6.0f }, { 9500.0f,  7.0f }, { 13000.0f, 8.0f }, { 20000.0f, 7.5f },
+    { 0.02f, 0.50f }, { 0.08f, 0.36f }, { 0.14f, 0.31f }, { 0.21f, 0.34f },
+    { 0.28f, 0.42f }, { 0.35f, 0.53f }, { 0.42f, 0.63f }, { 0.49f, 0.69f },
+    { 0.55f, 0.71f }, { 0.62f, 0.65f }, { 0.69f, 0.56f }, { 0.75f, 0.47f },
+    { 0.82f, 0.40f }, { 0.89f, 0.35f }, { 0.95f, 0.32f }, { 0.99f, 0.33f },
 };
 
+/** One narrow, deliberate cut. The same pencil, used surgically. */
+const std::vector<Way> kNotch
+{
+    { 0.44f, 0.50f }, { 0.48f, 0.56f }, { 0.51f, 0.70f }, { 0.525f, 0.84f },
+    { 0.535f, 0.90f }, { 0.545f, 0.84f }, { 0.56f, 0.70f }, { 0.60f, 0.56f },
+    { 0.64f, 0.50f },
+};
+
+juce::MouseEvent eventAt (juce::Component& canvas, juce::Point<float> p, bool dragged)
+{
+    return { juce::Desktop::getInstance().getMainMouseSource(),
+             p,
+             juce::ModifierKeys (juce::ModifierKeys::leftButtonModifier),
+             1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+             &canvas, &canvas,
+             juce::Time::getCurrentTime(),
+             p, juce::Time::getCurrentTime(),
+             1, dragged };
+}
+
+draweq::CurveCanvas* findCanvas (juce::Component& c)
+{
+    if (auto* found = dynamic_cast<draweq::CurveCanvas*> (&c))
+        return found;
+
+    for (auto* child : c.getChildren())
+        if (auto* found = findCanvas (*child))
+            return found;
+
+    return nullptr;
+}
+
+/** The pencil from the toolbar, drawn over the snapshot at the point the
+    gesture has reached. There is no operating-system cursor in a headless
+    render, and the tool the recording is demonstrating ought to be visible. */
+void drawCursor (juce::Image& image, juce::Point<float> pos, float size)
+{
+    using namespace draweq::icons;
+
+    juce::Graphics g (image);
+
+    // The unit-box pencil has its tip at (0.150, 0.850); line that up with the
+    // point being drawn so the graphite sits on the stroke, not beside it.
+    const auto place = juce::AffineTransform::scale (size)
+                           .translated (pos.x - 0.150f * size,
+                                        pos.y - 0.850f * size);
+
+    g.setColour (juce::Colours::black.withAlpha (0.45f));
+    g.fillPath (pencil(), place.translated (2.0f, 3.0f));
+
+    g.setColour (juce::Colour (0xffe8b23f));
+    g.fillPath (pencil(), place);
+
+    g.setColour (juce::Colour (0xffd6d9de));
+    g.fillPath (pencilFerrule(), place);
+
+    g.setColour (juce::Colour (0xff1b1d21));
+    g.fillPath (pencilTip(), place);
+
+    g.setColour (juce::Colour (0xff15171a));
+    g.strokePath (pencil(), juce::PathStrokeType (1.6f), place);
+    g.strokePath (pencilShoulder(), juce::PathStrokeType (1.2f), place);
+}
+
 /** Runs audio and pumps the message loop together. The worker fits on its own
-    thread and the canvas picks the result up on a timer, so a frame taken
-    without letting both run shows a plot line lagging the stroke by however
-    long we failed to wait. */
+    thread and the canvas repaints on a timer, so a frame taken without letting
+    both run shows a plot line lagging the stroke by however long we failed to
+    wait. */
 void settle (draweq::DrawEQProcessor& processor, int milliseconds)
 {
     constexpr int blockSize = 128;      // exactly what prepareToPlay was given
@@ -58,9 +135,14 @@ void settle (draweq::DrawEQProcessor& processor, int milliseconds)
     juce::MessageManager::getInstance()->runDispatchLoopUntil (milliseconds);
 }
 
-bool writeFrame (juce::AudioProcessorEditor& editor, const juce::File& dir, int index)
+bool writeFrame (juce::AudioProcessorEditor& editor, const juce::File& dir, int index,
+                 const juce::Point<float>* cursorInEditor)
 {
-    const auto image = editor.createComponentSnapshot (editor.getLocalBounds(), true);
+    auto image = editor.createComponentSnapshot (editor.getLocalBounds(), true);
+
+    if (cursorInEditor != nullptr)
+        drawCursor (image, *cursorInEditor, 34.0f);
+
     auto file = dir.getChildFile (juce::String::formatted ("frame-%03d.png", index));
     file.deleteFile();
 
@@ -79,7 +161,7 @@ int main (int argc, char** argv)
     const juce::ScopedJuceInitialiser_GUI juceInit;
 
     const juce::String outputDir = argc > 1 ? argv[1] : "frames";
-    const juce::String which     = argc > 2 ? argv[2] : "draw";
+    const juce::String which     = argc > 2 ? argv[2] : "sketch";
 
     juce::File dir (juce::File::getCurrentWorkingDirectory().getChildFile (outputDir));
     dir.createDirectory();
@@ -101,80 +183,93 @@ int main (int argc, char** argv)
     editor->setSize (draweq::Theme::Metrics::defaultWidth,
                      draweq::Theme::Metrics::defaultHeight);
 
-    // Let the analyser fill before the first frame, so the GIF does not open
-    // on an empty spectrum climbing into view.
+    auto* canvas = findCanvas (*editor);
+
+    if (canvas == nullptr)
+    {
+        std::fprintf (stderr, "no curve canvas in the editor\n");
+        return 1;
+    }
+
+    const auto& path = which == "notch" ? kNotch : kSketch;
+    const auto bounds = canvas->getLocalBounds().toFloat();
+
+    auto pixelFor = [&bounds] (Way w)
+    {
+        return juce::Point<float> (bounds.getX() + w.x * bounds.getWidth(),
+                                   bounds.getY() + w.y * bounds.getHeight());
+    };
+
+    auto inEditor = [&editor, canvas] (juce::Point<float> p)
+    {
+        return editor->getLocalPoint (canvas, p);
+    };
+
+    // Let the analyser fill before the first frame, so the recording does not
+    // open on an empty spectrum climbing into view.
     settle (processor, 700);
 
     int frame = 0;
-    auto& model = processor.curve();
 
-    if (which == "morph")
+    // Approach: the pencil travels to the start before anything is drawn, so
+    // the first thing a viewer sees is the tool arriving, not a line appearing
+    // from nowhere.
     {
-        // Draw the curve up front, then sweep morph. Morph is continuous at
-        // zero, which is what makes a drawing automatable, and a sweep is the
-        // only honest way to show that.
-        model.beginGesture();
-        model.startStroke (kStroke.front().hz, kStroke.front().db);
+        const auto start = pixelFor (path.front());
+        const juce::Point<float> from (start.x - 90.0f, start.y - 70.0f);
 
-        for (size_t i = 1; i < kStroke.size(); ++i)
-            model.strokeTo (kStroke[i].hz, kStroke[i].db, 0.5f, 1.0f,
-                            draweq::CurveModel::Brush::draw);
-
-        model.endGesture();
-        settle (processor, 400);
-
-        auto* morph = processor.apvts.getParameter (draweq::params::id::morph);
-
-        if (morph == nullptr)
+        for (int i = 0; i <= 5; ++i)
         {
-            std::fprintf (stderr, "no morph parameter\n");
-            return 1;
-        }
-
-        constexpr int steps = 26;
-
-        for (int i = 0; i <= steps; ++i)          // flat -> drawn
-        {
-            morph->setValueNotifyingHost (float (i) / float (steps));
-            settle (processor, 90);
-            writeFrame (*editor, dir, frame++);
-        }
-
-        for (int i = steps - 1; i >= 0; --i)      // and back
-        {
-            morph->setValueNotifyingHost (float (i) / float (steps));
-            settle (processor, 90);
-            writeFrame (*editor, dir, frame++);
+            const auto p = from + (start - from) * (float (i) / 5.0f);
+            canvas->mouseMove (eventAt (*canvas, p, false));
+            settle (processor, 60);
+            const auto cursor = inEditor (p);
+            writeFrame (*editor, dir, frame++, &cursor);
         }
     }
-    else
+
+    // The stroke. Waypoints are interpolated so the pencil moves smoothly
+    // rather than teleporting between control points, and the gesture stays
+    // open throughout exactly as it would under a held button.
+    canvas->mouseDown (eventAt (*canvas, pixelFor (path.front()), false));
+
+    constexpr int stepsPerLeg = 3;
+
+    for (size_t i = 1; i < path.size(); ++i)
     {
-        // One stroke, one frame at a time. The gesture stays open across the
-        // whole animation exactly as it would under a held mouse button, so
-        // the ghost line and the fit behave as they do in use.
-        settle (processor, 200);
-        writeFrame (*editor, dir, frame++);       // a beat on the flat curve
+        const auto a = pixelFor (path[i - 1]);
+        const auto b = pixelFor (path[i]);
 
-        model.beginGesture();
-        model.startStroke (kStroke.front().hz, kStroke.front().db);
-
-        for (size_t i = 1; i < kStroke.size(); ++i)
+        for (int s = 1; s <= stepsPerLeg; ++s)
         {
-            model.strokeTo (kStroke[i].hz, kStroke[i].db, 0.5f, 1.0f,
-                            draweq::CurveModel::Brush::draw);
-            settle (processor, 110);
-            writeFrame (*editor, dir, frame++);
+            const auto p = a + (b - a) * (float (s) / float (stepsPerLeg));
+            canvas->mouseDrag (eventAt (*canvas, p, true));
+            settle (processor, 55);
+            const auto cursor = inEditor (p);
+            writeFrame (*editor, dir, frame++, &cursor);
         }
+    }
 
-        model.endGesture();
+    // Release. This is the moment the fit happens, so it gets held on.
+    const auto end = pixelFor (path.back());
+    canvas->mouseUp (eventAt (*canvas, end, true));
 
-        // Hold on the finished curve. The fit continues to converge after the
-        // stroke ends, and that is worth seeing rather than cutting away from.
-        for (int i = 0; i < 10; ++i)
-        {
-            settle (processor, 120);
-            writeFrame (*editor, dir, frame++);
-        }
+    for (int i = 0; i < 5; ++i)
+    {
+        settle (processor, 110);
+        const auto cursor = inEditor (end);
+        writeFrame (*editor, dir, frame++, &cursor);
+    }
+
+    // Take the pointer off the canvas rather than just ceasing to draw it.
+    // The crosshair readout belongs to the mouse being there, so leaving it
+    // behind with no cursor under it looks like a rendering bug.
+    canvas->mouseExit (eventAt (*canvas, end, false));
+
+    for (int i = 0; i < 8; ++i)
+    {
+        settle (processor, 110);
+        writeFrame (*editor, dir, frame++, nullptr);
     }
 
     if (auto* tone = processor.apvts.getParameter (draweq::params::id::testTone))

@@ -6,7 +6,7 @@ Draw the frequency response you want. The plugin figures out how to be it.
 
 That's the whole idea. You sketch a shape with a pencil, let go, and DrawEQ
 works out a filter that matches what you drew — in the clip above, twelve bands
-landing within 0.15 dB of the stroke, at zero latency.
+landing within 0.43 dB of the stroke, at zero latency.
 
 ## Why bother
 
@@ -37,9 +37,17 @@ ribbon between them. When the fit is exact the ribbon disappears. When it
 isn't, it blooms at the exact frequency that's giving the fitter trouble, so
 you can see the disagreement instead of guessing at it.
 
-## Morph
+## Broad strokes or surgical
 
-![The morph control sweeping from flat to the drawn curve and back](docs/media/morph.gif)
+Same pencil, same gesture, very different job:
+
+![Drawing a narrow notch, and the fit following it](docs/media/notch.gif)
+
+That's a deep, narrow cut drawn freehand and fitted to 0.34 dB. Watch the grey
+analyser underneath — the hole in the spectrum appears where the stroke went.
+You're not approximating a notch by feel, you're drawing one.
+
+## Morph
 
 `morph` blends from flat toward whatever you drew, and it's continuous at zero.
 That's what makes a drawing automatable — you can't automate a gesture, but you
@@ -177,9 +185,11 @@ None of these ship. They exist to answer questions the tests can't.
 # Render the editor to a PNG. No window, no audio device.
 ./build/DrawEQSnapshot_artefacts/*/DrawEQSnapshot out.png ribbon
 
-# The GIFs at the top of this file, start to finish.
-./build/DrawEQFrames_artefacts/*/DrawEQFrames frames draw
-./Tools/make_gifs.py frames docs/media/draw.gif
+# The GIFs in this file, start to finish. DrawEQFrames drives the real canvas
+# with synthesised mouse events, so what gets recorded is the actual drawing
+# path rather than a re-enactment of it. Modes: sketch | notch
+./build/DrawEQFrames_artefacts/*/DrawEQFrames frames sketch
+./Tools/make_gifs.py frames docs/media/draw.gif --width 900 --colors 128
 ```
 
 ## How it's put together
