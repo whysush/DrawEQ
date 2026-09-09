@@ -85,7 +85,8 @@ If you prefer to place the folder yourself, every release also carries
 `DrawEQ-Windows-VST3.zip`. Unzip it, drop `DrawEQ.vst3` wherever your host
 looks.
 
-*Note*: The binaries for this tool aren't signed, so SmartScreen complains the first time you try to run it. It's purely a certificate issue and I guarantee you it's not a safety issue whatsoever. Kindly ignore it. If it's still bothering you, you may build it yourself using CI. 
+Note: The binaries for this tool aren't signed, so SmartScreen complains the first time you try to run it. It's purely a certificate issue and I guarantee you it's not a safety issue whatsoever. Kindly ignore it. If it's still bothering you, you may build it yourself using CI. 
+
 ---
 
 ## Donations (purely optional!)
