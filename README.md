@@ -27,7 +27,7 @@
 
 ---
 
-## The problem
+*The problem*
 
 Every EQ makes you translate.
 
