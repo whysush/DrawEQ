@@ -27,32 +27,18 @@
 
 ---
 
-*The problem*
+**The problem**: Most EQs make you translate. If you have to change the nature of the sound at one particular point of the curve, you have to pick a band, frequency, Q and gain. Personally, manipulating the bands leads to my curve taking on a shape I didn't even want. 
 
-Every EQ makes you translate.
+**The idea**:
+Draw the shape freehand, however you like it. DrawEQ fits twelve bands to within 0.43 dB of what you drew, all with zero latency. Furthermore, the bands are still labelled, draggable and automatable. 
 
-You hear "there's too much boxiness around 400" and then you go hunting. Which
-band? What Q? How much cut? You already knew the shape you wanted before you
-touched anything, and then you spent two minutes explaining it to a row of
-knobs.
-
-## The idea
-
-Skip the translation. Draw the shape.
-
-In the clip above, that's one freehand stroke. Let go, and DrawEQ fits **twelve
-bands to within 0.43 dB of it, at zero latency**. Not a picture of an EQ curve
-whose response is faked underneath. Real biquads, doing what you drew.
-
-And you get the bands back. Labelled, draggable, automatable. Grab one and
-nudge it if the fit isn't quite what you meant. You drew a gesture and got an
-editable band stack out of it, with no conversion step and no mode switch.
+Also, you can either draw full curves or even edit specific parts of the curve using the pencil. 
 
 ## Broad strokes or surgical
 
 Same pencil, same gesture, very different job:
 
-![Drawing a narrow notch, and the fit following it](docs/media/notch.gif)
+![Drawing a narrow notch in the curve, and the fit following it](docs/media/notch.gif)
 
 A deep, narrow cut drawn freehand and fitted to 0.34 dB. Watch the grey
 analyser underneath: the hole appears in the spectrum exactly where the stroke
@@ -85,8 +71,7 @@ Run it. The installer drops the plugin into `C:\Program Files\Common Files\VST3`
 tickbox.
 
 Windows will throw up a blue "Windows protected your PC" box first. Click
-**More info** → **Run anyway**. [Here's why](#about-that-warning), and it isn't
-because there's anything wrong with the download.
+**More info** → **Run anyway**.
 
 Then tell your host about it:
 
@@ -96,25 +81,14 @@ Then tell your host about it:
 - **Ableton, Reaper, Bitwig, Studio One** — just rescan. They all check the
   Common Files path by default.
 
-Prefer to place the folder yourself? Every release also carries
+If you prefer to place the folder yourself, every release also carries
 `DrawEQ-Windows-VST3.zip`. Unzip it, drop `DrawEQ.vst3` wherever your host
 looks.
 
-### About that warning
-
-The binaries aren't signed, so SmartScreen complains the first time. That's a
-paperwork problem rather than a code problem. Killing the warning needs a
-certificate issued by a certificate authority against a verified legal
-identity, which runs a few hundred a year. Self-signing doesn't help: it makes
-a signature nobody else's machine trusts, so you get the warning anyway and the
-only thing gained is the feeling of having dealt with it.
-
-If that bothers you, build it yourself. The whole thing is here and CI builds
-it in public.
-
+*Note*: The binaries for this tool aren't signed, so SmartScreen complains the first time you try to run it. It's purely a certificate issue and I guarantee you it's not a safety issue whatsoever. Kindly ignore it. If it's still bothering you, you may build it yourself using CI. 
 ---
 
-## If it's useful to you
+## Donations (purely optional!)
 
 <p align="center">
   <a href="https://paypal.me/bludwinder">
@@ -123,16 +97,12 @@ it in public.
   </a>
 </p>
 
-DrawEQ is free, and it's staying free. I built it because I wanted it to exist
-and nobody was going to build it for me.
+DrawEQ is completely free, and it's staying free. I built it because I wanted it to exist
+and nobody was going to build it for me, and I understand that there are people like me who may also need something like this. 
 
-That said — if it ends up on a mix you're proud of, and you feel like throwing
-a couple of bucks at it, the link's there and I'd appreciate it more than you'd
-think. If not, genuinely, no hard feelings. Use it, enjoy it, and tell me what
-breaks.
+That said, if you find it truly useful, and you have some money to spare, please do consider donating as that would motivate to better the software. It's completely optional!
 
-Bug reports and screenshots of curves you've drawn are worth just as much to
-me, and those are free too.
+Please do report any bugs and crashes you come across. 
 
 ---
 
@@ -140,7 +110,6 @@ me, and those are free too.
 
 | | |
 |---|---|
-| `P` `L` `S` `E` `N` | pencil, line, smooth, erase, node |
 | wheel | brush radius, measured in octaves, so it feels the same at 60 Hz as at 6 kHz |
 | `Shift` | lock to constant dB |
 | `Alt` | smooth, just while held |
@@ -149,13 +118,9 @@ me, and those are free too.
 | double-click | flatten one octave |
 | `Ctrl+Z` | undo, a whole stroke at a time rather than a pixel at a time |
 
-The **Node** tool is the one worth understanding. Draw, and you get bands. Drag
-a band, and the curve rewrites itself to match. Draw again and it re-fits.
-Gesture and precision in the same tool.
+The Node tool is the one worth understanding. Draw, and you get bands. Drag a band, and the curve rewrites itself to match. Draw again and it re-fits. Gesture and precision in the same tool.
 
-Slots behave how you'd expect: click to select the one you're drawing into,
-shift-click to store, alt-click to clear, right-click to set it as the morph
-target.
+Slots behave how you would expect: click to select the one you are drawing into, shift-click to store, alt-click to clear, right-click to set it as the morph target.
 
 ---
 
