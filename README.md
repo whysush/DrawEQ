@@ -1,41 +1,53 @@
-# DrawEQ
+<p align="center">
+  <h1 align="center">DrawEQ</h1>
+  <p align="center">
+    <b>Draw the frequency response you want. The plugin figures out how to be it.</b>
+  </p>
+</p>
 
-Draw the frequency response you want. The plugin figures out how to be it.
+<p align="center">
+  <a href="https://github.com/whysush/DrawEQ/releases/latest/download/DrawEQ.msi">
+    <img alt="Download for Windows"
+         src="https://img.shields.io/badge/Download-Windows%20installer-e8b23f?style=for-the-badge&logo=windows&logoColor=1b1d21&labelColor=1b1d21">
+  </a>
+  <a href="https://paypal.me/bludwinder">
+    <img alt="Buy me a coffee"
+         src="https://img.shields.io/badge/Buy%20me%20a%20coffee-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white&labelColor=1b1d21">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/whysush/DrawEQ/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/whysush/DrawEQ/actions/workflows/ci.yml/badge.svg">
+  </a>
+  <img alt="VST3" src="https://img.shields.io/badge/VST3-Windows-9aa0a6">
+  <img alt="Latency" src="https://img.shields.io/badge/latency-0.0%20ms-9aa0a6">
+</p>
 
 ![Drawing a curve, and the fit snapping to it on release](docs/media/draw.gif)
 
-That's the whole idea. You sketch a shape with a pencil, let go, and DrawEQ
-works out a filter that matches what you drew — in the clip above, twelve bands
-landing within 0.43 dB of the stroke, at zero latency.
+---
 
-## Why bother
+## The problem
 
-Every EQ makes you translate. You hear "there's too much boxiness around 400"
-and then you go hunting for the right band, the right Q, the right amount of
-cut. The knobs are in the way of the thing you already know you want.
+Every EQ makes you translate.
 
-So: skip the translation. Draw the shape. DrawEQ handles the rest, and hands
-you back real bands you can grab and nudge afterwards if the fit isn't quite
-right.
+You hear "there's too much boxiness around 400" and then you go hunting. Which
+band? What Q? How much cut? You already knew the shape you wanted before you
+touched anything, and then you spent two minutes explaining it to a row of
+knobs.
 
-## Two ways of getting there
+## The idea
 
-**Analog** is the default. A background optimiser fits a cascade of biquads to
-your stroke. Zero latency, the phase behaviour you'd expect from a normal EQ,
-and — the part I like most — it gives you back *labelled, draggable,
-automatable bands*. You drew a gesture and got an editable band stack out of
-it. No conversion step, no mode switch.
+Skip the translation. Draw the shape.
 
-**Spectral** turns the curve straight into an FFT-domain filter. It'll match
-anything, however sharp, but you pay for it: either latency (linear phase) or
-phase rotation (minimum phase). Reach for it when you need a notch that no
-biquad cascade is going to give you.
+In the clip above, that's one freehand stroke. Let go, and DrawEQ fits **twelve
+bands to within 0.43 dB of it, at zero latency**. Not a picture of an EQ curve
+whose response is faked underneath. Real biquads, doing what you drew.
 
-The display always shows you both sides of that bargain — a graphite ghost
-where your hand went, a plotter line for what you actually got, and a shaded
-ribbon between them. When the fit is exact the ribbon disappears. When it
-isn't, it blooms at the exact frequency that's giving the fitter trouble, so
-you can see the disagreement instead of guessing at it.
+And you get the bands back. Labelled, draggable, automatable. Grab one and
+nudge it if the fit isn't quite what you meant. You drew a gesture and got an
+editable band stack out of it, with no conversion step and no mode switch.
 
 ## Broad strokes or surgical
 
@@ -43,53 +55,85 @@ Same pencil, same gesture, very different job:
 
 ![Drawing a narrow notch, and the fit following it](docs/media/notch.gif)
 
-That's a deep, narrow cut drawn freehand and fitted to 0.34 dB. Watch the grey
-analyser underneath — the hole in the spectrum appears where the stroke went.
-You're not approximating a notch by feel, you're drawing one.
+A deep, narrow cut drawn freehand and fitted to 0.34 dB. Watch the grey
+analyser underneath: the hole appears in the spectrum exactly where the stroke
+went. You're not approximating a notch by feel. You're drawing one.
 
-## Morph
+## What's in it
 
-`morph` blends from flat toward whatever you drew, and it's continuous at zero.
-That's what makes a drawing automatable — you can't automate a gesture, but you
-can automate this, and it's the same shape either way.
+| | |
+|---|---|
+| **Analog mode** | Fits a cascade of biquads to your stroke. Zero latency, ordinary EQ phase behaviour, and real bands you can edit afterwards. |
+| **Spectral mode** | Turns the curve straight into an FFT filter. Matches anything however sharp, and charges you either latency (linear phase) or phase rotation (minimum phase). |
+| **It shows you the gap** | A ghost line where your hand went, a plotter line for what you actually got, and a shaded ribbon between them. When the fit is exact the ribbon vanishes. When it isn't, it blooms at the frequency giving the fitter trouble, so you can *see* the disagreement instead of guessing. |
+| **Live analyser** | Constant-Q band energy, not raw FFT bins, so pink noise reads flat and a tone is the same width at 100 Hz as at 10 kHz. |
+| **8 slots + morph** | `morph` blends from flat toward what you drew, continuous at zero. You can't automate a gesture, but you can automate this — same shape either way. |
+| **Never allocates on the audio thread** | Not a claim. `TestRealtimeSafety` traps every allocation and fails the build if one happens. |
 
 ---
 
-## Installing (Windows)
+## Get it
 
-Grab `DrawEQ.msi` from [the latest
-release](https://github.com/whysush/DrawEQ/releases) and run it. It drops the
-plugin into `C:\Program Files\Common Files\VST3` (creating that folder if you
-don't have one) and offers the standalone app as a tickbox.
+<p align="center">
+  <a href="https://github.com/whysush/DrawEQ/releases/latest/download/DrawEQ.msi">
+    <img alt="Download the Windows installer"
+         src="https://img.shields.io/badge/Download-Windows%20installer%20(.msi)-e8b23f?style=for-the-badge&logo=windows&logoColor=1b1d21&labelColor=1b1d21">
+  </a>
+</p>
+
+Run it. The installer drops the plugin into `C:\Program Files\Common Files\VST3`
+(creating that folder if you don't have one) and offers the standalone app as a
+tickbox.
 
 Windows will throw up a blue "Windows protected your PC" box first. Click
 **More info** → **Run anyway**. [Here's why](#about-that-warning), and it isn't
-because something's wrong with the download.
+because there's anything wrong with the download.
 
 Then tell your host about it:
 
-- **FL Studio** — Options → Manage plugins. Make sure
+- **FL Studio** — Options → Manage plugins. Check that
   `C:\Program Files\Common Files\VST3` is in the VST3 search paths, then hit
   **Find more plugins**. It shows up under Effects.
 - **Ableton, Reaper, Bitwig, Studio One** — just rescan. They all check the
   Common Files path by default.
 
-If you'd rather place the folder yourself, the release also has
-`DrawEQ-Windows-VST3.zip`. Unzip, drop `DrawEQ.vst3` wherever your host looks.
+Prefer to place the folder yourself? Every release also carries
+`DrawEQ-Windows-VST3.zip`. Unzip it, drop `DrawEQ.vst3` wherever your host
+looks.
 
 ### About that warning
 
 The binaries aren't signed, so SmartScreen complains the first time. That's a
-paperwork problem, not a code problem — killing the warning needs a certificate
-issued by a certificate authority against a verified legal identity, which
-costs a few hundred a year. Self-signing doesn't help: it produces a signature
-nobody else's machine trusts, so you get the warning anyway and the only thing
-gained is the feeling of having dealt with it.
+paperwork problem rather than a code problem. Killing the warning needs a
+certificate issued by a certificate authority against a verified legal
+identity, which runs a few hundred a year. Self-signing doesn't help: it makes
+a signature nobody else's machine trusts, so you get the warning anyway and the
+only thing gained is the feeling of having dealt with it.
 
-The build is ready for a real one whenever there is one. CI signs the plugin,
-the standalone and the installer — timestamped — as soon as
-`WINDOWS_CERT_BASE64` and `WINDOWS_CERT_PASSWORD` exist in the repo secrets,
-and quietly skips signing when they don't.
+If that bothers you, build it yourself. The whole thing is here and CI builds
+it in public.
+
+---
+
+## If it's useful to you
+
+<p align="center">
+  <a href="https://paypal.me/bludwinder">
+    <img alt="Buy me a coffee on PayPal"
+         src="https://img.shields.io/badge/Buy%20me%20a%20coffee-paypal.me%2Fbludwinder-00457C?style=for-the-badge&logo=paypal&logoColor=white&labelColor=1b1d21">
+  </a>
+</p>
+
+DrawEQ is free, and it's staying free. I built it because I wanted it to exist
+and nobody was going to build it for me.
+
+That said — if it ends up on a mix you're proud of, and you feel like throwing
+a couple of quid at it, the link's there and I'd appreciate it more than you'd
+think. If not, genuinely, no hard feelings. Use it, enjoy it, and tell me what
+breaks.
+
+Bug reports and screenshots of curves you've drawn are worth just as much to
+me, and those are free too.
 
 ---
 
@@ -98,25 +142,26 @@ and quietly skips signing when they don't.
 | | |
 |---|---|
 | `P` `L` `S` `E` `N` | pencil, line, smooth, erase, node |
-| wheel | brush radius, measured in octaves — so it feels the same at 60 Hz as at 6 kHz |
+| wheel | brush radius, measured in octaves, so it feels the same at 60 Hz as at 6 kHz |
 | `Shift` | lock to constant dB |
 | `Alt` | smooth, just while held |
 | `Ctrl` / `Cmd` | fine adjust |
 | right-drag | erase back toward flat |
 | double-click | flatten one octave |
-| `Ctrl+Z` | undo — a whole stroke at a time, not a pixel at a time |
+| `Ctrl+Z` | undo, a whole stroke at a time rather than a pixel at a time |
 
 The **Node** tool is the one worth understanding. Draw, and you get bands. Drag
 a band, and the curve rewrites itself to match. Draw again and it re-fits.
 Gesture and precision in the same tool.
 
-Slots work like you'd expect: click to select the one you're drawing into,
+Slots behave how you'd expect: click to select the one you're drawing into,
 shift-click to store, alt-click to clear, right-click to set it as the morph
 target.
 
 ---
 
-## Building it yourself
+<details>
+<summary><b>Building it yourself</b></summary>
 
 You need CMake 3.22+ and a C++20 compiler. JUCE 8.0.9, Eigen 3.4 and Catch2 v3
 get fetched and pinned for you.
@@ -137,15 +182,25 @@ sudo apt-get install libasound2-dev libx11-dev libxext-dev libxrandr-dev \
 
 Everything lands in `build/DrawEQ_artefacts/` — a VST3 and a standalone.
 
-## Tests
+The Windows installer is built by CI, because WiX only runs on Windows and
+means it. To build one on a Windows machine:
+
+```bash
+./Installer/build-msi.sh <vst3-bundle-dir> <standalone-exe> DrawEQ.msi
+```
+
+</details>
+
+<details>
+<summary><b>Tests</b></summary>
 
 ```bash
 ctest --test-dir build --output-on-failure
 ```
 
-They're headless on purpose. Core and DSP link only `juce_dsp`, so there's no
-display server involved and they run anywhere, including CI. Here's what each
-one is actually protecting:
+Headless on purpose. Core and DSP link only `juce_dsp`, so there's no display
+server involved and they run anywhere, CI included. What each one is actually
+protecting:
 
 | File | What it protects |
 |---|---|
@@ -161,13 +216,16 @@ one is actually protecting:
 | `TestSweeps` | every sample rate × block size, prepare/release cycles, automation thrash |
 | `TestRealtimeSafety` | a global allocation trap proving the audio path never allocates |
 
-And validation, at the strictest level pluginval offers:
+Plus validation at the strictest level pluginval offers:
 
 ```bash
 pluginval --strictness-level 10 --validate build/.../DrawEQ.vst3
 ```
 
-## Tools
+</details>
+
+<details>
+<summary><b>Tools</b></summary>
 
 None of these ship. They exist to answer questions the tests can't.
 
@@ -185,14 +243,17 @@ None of these ship. They exist to answer questions the tests can't.
 # Render the editor to a PNG. No window, no audio device.
 ./build/DrawEQSnapshot_artefacts/*/DrawEQSnapshot out.png ribbon
 
-# The GIFs in this file, start to finish. DrawEQFrames drives the real canvas
-# with synthesised mouse events, so what gets recorded is the actual drawing
-# path rather than a re-enactment of it. Modes: sketch | notch
+# The GIFs above, start to finish. DrawEQFrames drives the real canvas with
+# synthesised mouse events, so what gets recorded is the actual drawing path
+# rather than a re-enactment of it. Modes: sketch | notch
 ./build/DrawEQFrames_artefacts/*/DrawEQFrames frames sketch
 ./Tools/make_gifs.py frames docs/media/draw.gif --width 900 --colors 128
 ```
 
-## How it's put together
+</details>
+
+<details>
+<summary><b>How it's put together</b></summary>
 
 ```
 Source/
@@ -204,16 +265,18 @@ Source/
 
 Three threads, data flowing one way. The message thread owns the curve. A
 worker thread turns it into a `FilterState`. The audio thread crossfades to
-that state and hands the old one back to be freed somewhere safe. The audio
-thread never allocates, never locks, never destroys — and `TestRealtimeSafety`
-asserts that rather than taking my word for it.
+that state and hands the old one back to be freed somewhere it's safe to free
+things. The audio thread never allocates, never locks, never destroys, and
+`TestRealtimeSafety` asserts that rather than taking my word for it.
 
-If you want the long version: [CONTEXT.md](CONTEXT.md) is the original spec,
-and [DECISIONS.md](DECISIONS.md) is every place the implementation departed
-from it, with the reasoning and the measurements that prompted it. That second
-file is the honest one — it's got the bugs in it too.
+</details>
 
 ---
+
+Want the long version? [CONTEXT.md](CONTEXT.md) is the original specification,
+and [DECISIONS.md](DECISIONS.md) is every place the implementation departed
+from it, with the reasoning and the measurements that prompted it. That second
+file is the honest one. The bugs are in there too.
 
 Built with [JUCE](https://juce.com) and [Eigen](https://eigen.tuxfamily.org).
 Typefaces are JetBrains Mono and Space Grotesk, both SIL OFL.
