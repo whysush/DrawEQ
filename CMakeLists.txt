@@ -275,7 +275,7 @@ if (DRAWEQ_BUILD_TESTS)
     include (CTest)
 
     # The gating run excludes [performance]. Those tests assert wall-clock
-    # budgets from CONTEXT.md 10, which are specified against a real machine -
+    # budgets, which are specified against a real machine -
     # on a shared two-core CI runner they measure the neighbours rather than
     # the code, and a 6 % overshoot there says nothing about whether the fitter
     # got slower. They still run locally, and CI reports them without gating.

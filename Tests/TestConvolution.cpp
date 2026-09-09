@@ -116,7 +116,7 @@ TEST_CASE ("a unit impulse IR passes audio through untouched", "[convolution][nu
         worst = std::max (worst, std::abs (double (outA[std::size_t (n + engine.latencySamples())])
                                          - double (input[std::size_t (n)])));
 
-    // -120 dB is the bar from CONTEXT.md 11; single precision FFT round-trip
+    // -120 dB is the bar; single precision FFT round-trip
     // over a 4096-tap IR lands comfortably under it.
     REQUIRE (20.0 * std::log10 (std::max (worst, 1.0e-12)) < -120.0);
 }

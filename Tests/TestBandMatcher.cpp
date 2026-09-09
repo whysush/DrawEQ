@@ -31,7 +31,7 @@ std::array<int, kMaxBands> ranksOf (const Band* bands, int n)
 TEST_CASE ("band identity survives 500 frames of a morphing curve", "[matcher]")
 {
     // If a token teleports under the user's cursor mid-drag, this is the test
-    // that should have caught it (CONTEXT.md 11).
+    // that should have caught it.
     constexpr double sr = 48000.0;
     constexpr int bells = 10;
 

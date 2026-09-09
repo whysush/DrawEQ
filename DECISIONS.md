@@ -2,9 +2,7 @@
 
 This project was built from a written specification. Where the implementation
 departs from that spec, or where the spec was ambiguous enough that a choice had
-to be made, it is recorded here with the reasoning. Section references below
-("CONTEXT.md 11" and the like) point into that original document, which is not
-published here. Rule 10 says to ask rather than guess; these are the
+to be made, it is recorded here with the reasoning. Rule 10 says to ask rather than guess; these are the
 places where a decision was needed to keep building, and each one is reversible.
 
 ---
@@ -135,7 +133,7 @@ to keep them running while unused, they are reset on the way back in and the
   slots start empty.
 - **FL Studio verification.** This machine is Linux. The VST3 builds and passes
   pluginval, but it has not been loaded in FL Studio, which is the one test
-  CONTEXT.md 12 asks for at every milestone.
+  the spec asks for at every milestone.
 - **Tooltips.** Tool buttons carry tooltips but no TooltipWindow is installed,
   so nothing displays them yet.
 
@@ -169,7 +167,7 @@ Worth revisiting against a newer JUCE before Linux becomes a real target.
 ## Measured performance
 
 From `DrawEQFitBench` and the timing assertions in `TestCurveFitter`, on a
-12-core desktop at 48 kHz. CONTEXT.md 10 asks for these to be stated rather than
+12-core desktop at 48 kHz. The spec asks for these to be stated rather than
 quietly shipped past.
 
 | Path | Budget | Measured |
@@ -193,7 +191,7 @@ evaluation point and hoisting the per-band constants out of the inner loop -
 `response::bandDb` is still the reference, and a test asserts the fast path
 agrees with it to a thousandth of a dB.
 
-The audio-thread budgets in CONTEXT.md 10 (CPU percentages under a real host)
+The audio-thread budgets in the spec (CPU percentages under a real host)
 have **not** been measured: that needs a host and a profiler, and this machine
 has neither FL Studio nor a calibrated reference. What has been verified is the
 harder invariant behind them - `TestRealtimeSafety` proves the audio path never
@@ -201,9 +199,9 @@ allocates, under a global allocation trap, in both modes and mid-crossfade.
 
 ---
 
-## The interface was redesigned (supersedes CONTEXT.md 9.1-9.3)
+## The interface was redesigned
 
-CONTEXT.md describes a drafting surface: graphite-grey ghost, warm amber plotter
+The spec describes a drafting surface: graphite-grey ghost, warm amber plotter
 line, indigo-to-gold band ramp, Space Grotesk labels with JetBrains Mono
 numbers. That is no longer what is built. On a supplied visual reference the
 interface became a **phosphor terminal**, and the sections above are the record
@@ -221,7 +219,7 @@ of what changed rather than a description of the shipping design.
   instead of rotary dials. The cells quantise the value visually, so two
   parameters at the same setting line up exactly and the column reads like a
   column of numbers. `Knob` is deleted; `BarSlider` replaces it.
-- **Monospace throughout.** CONTEXT.md 9.3 says labels are Grotesk and values
+- **Monospace throughout.** The spec says labels are Grotesk and values
   are Mono, never mixed. A terminal sets everything in one width, so the
   grotesk is now used for the wordmark alone.
 - **A status console.** Three lines under the sidebar: fit quality and band
@@ -248,12 +246,12 @@ because a panel reporting a plausible constant would be worse than no panel.
 **Not adopted from the reference.** It shows an `OVERSAMPLE` checkbox and labels
 the analyser selector `CHANNEL`. Oversampling is not implemented, and a control
 that does nothing is worse than an absent one. `CHANNEL` would imply mid-side or
-channel selection, which CONTEXT.md 1 lists as an explicit non-goal, so that
+channel selection, which the spec lists as an explicit non-goal, so that
 selector is labelled for what it actually does.
 
 ## Tool icons are vector paths, not font glyphs
 
-CONTEXT.md 9.5 sketches the tool row as characters. Setting a button's text to a
+The spec sketches the tool row as characters. Setting a button's text to a
 pencil or erase glyph depends on whichever fallback face the machine has, so two
 users would see different icons and one would see tofu. `ToolIcons.h` draws all
 five as paths in a unit box: they take the theme colour, stay crisp at any UI
@@ -270,7 +268,7 @@ token on the canvas, so the icon and the thing it manipulates match.
 
 ## The brush was rewritten to track the cursor
 
-CONTEXT.md 6.2 describes drawing as a raised-cosine dab per incoming point, with
+The spec describes drawing as a raised-cosine dab per incoming point, with
 interpolation between mouse positions. Implemented literally, that lags: each
 dab pulls its neighbours toward *its own* target, so a bin painted early gets
 dragged most of the way to whatever the stroke does next, and a steep gesture
@@ -305,9 +303,9 @@ of a flattened version of it. That is the correct direction.
 
 ---
 
-## Drawing is committed, not tracked (supersedes CONTEXT.md 5's cadence)
+## Drawing is committed, not tracked (supersedes the spec's cadence)
 
-CONTEXT.md 5 has the worker re-fitting continuously while the user drags, at up
+The spec has the worker re-fitting continuously while the user drags, at up
 to thirty states a second, dropping intermediate strokes. That is now the
 optional behaviour rather than the default.
 
@@ -352,7 +350,7 @@ not depend on how the user arrived at it.
 
 **On "1:1".** Spectral mode genuinely is: the drawn curve becomes the filter
 directly, and the null test holds it to -132 dB. Analog cannot be, for any
-finite band count - that is CONTEXT.md 7.5 and it is why Spectral ships
+finite band count - that is the spec and it is why Spectral ships
 alongside. What the committed fit does is get close enough that the distinction
 stops mattering for musical curves, and `MAX ERR` still says so honestly when it
 does not.
@@ -385,7 +383,7 @@ Only the line was wrong.
 
 **Three changes.**
 
-- The ghost is now the raw stroke, which is what CONTEXT.md 9.4 says it is and
+- The ghost is now the raw stroke, which is what the spec says it is and
   what an earlier entry here traded away for a tidier ribbon. That trade was
   wrong: a drawing tool whose line does not land under the cursor is broken,
   however good the reason.
@@ -393,7 +391,7 @@ Only the line was wrong.
   actually moved something, so the difference is visible and attributable
   instead of silently folded into the ghost. The ribbon still spans target to
   achieved, so `MAX ERR` keeps meaning fit error and nothing else.
-- **`smooth` now defaults to 0 %**, against CONTEXT.md 8.2's 15 %. That default
+- **`smooth` now defaults to 0 %**, against the spec's 15 %. That default
   made sense when the fit had one frame to work in and needed the target
   softened; the committed fit does not need the help, and blurring the stroke by
   a fifth of an octave before the DSP sees it works against every other decision
@@ -636,12 +634,12 @@ The first Windows CI run failed on this:
     REQUIRE( ms < 50.0 )
 
 The fit was correct to a thousandth of a dB. What failed was a wall-clock
-assertion, on a shared two-core runner, against a budget CONTEXT.md 10
+assertion, on a shared two-core runner, against a budget the spec
 specifies for "a 2020-era quad-core laptop". A 6 % overshoot there says nothing
 about whether the fitter got slower - it says the runner had neighbours.
 
 Gating on it was my mistake, and loosening the budget would have been the wrong
-fix: the number is a real product requirement and CONTEXT.md 10 asks for it to
+fix: the number is a real product requirement and the spec asks for it to
 be stated rather than shipped past. So the budgets stay exactly where they are
 and keep failing the build on a machine whose speed is known, and CI runs them
 in a separate step that reports the figures without gating. `ctest` runs
@@ -721,7 +719,7 @@ tilt.
 What every EQ analyser actually does, and what this does now, is sum **energy
 per constant-Q band**. The bands widen with frequency exactly as pink noise's
 per-hertz energy falls, so pink reads flat with no corrective tilt at all - the
-+4.5 dB/octave of CONTEXT.md 7.6 is gone, because it was compensating for the
++4.5 dB/octave of the spec is gone, because it was compensating for the
 wrong analysis rather than for anything real.
 
 Getting there took two passes, and the second only became visible once the test

@@ -19,7 +19,7 @@ namespace draweq
     Thread safety: a plain mutex guards the grid. That is legal here precisely
     because the two parties are the message thread and the worker thread. The
     audio thread never touches this class - it only ever sees a FilterState the
-    worker published (CONTEXT.md 5).
+    worker published.
 */
 class CurveModel
 {
@@ -37,10 +37,9 @@ public:
     void reset();
 
     // --- editing -----------------------------------------------------------
-    //
     // A gesture is one undo entry. Mouse-down calls beginGesture, every drag
     // point calls strokeTo, mouse-up calls endGesture - so a whole stroke
-    // collapses into a single Ctrl+Z (CONTEXT.md 9.6).
+    // collapses into a single Ctrl+Z.
 
     void beginGesture();
     void endGesture();
@@ -100,10 +99,9 @@ public:
     bool canRedo() const;
 
     // --- serialisation -----------------------------------------------------
-    //
     // Versioned binary, base64'd into the plugin state by the processor. The
     // version int is what lets a future grid size migrate instead of loading
-    // as garbage (CONTEXT.md 8.1).
+    // as garbage.
 
     static constexpr std::uint16_t kCurveVersion = 1;
 

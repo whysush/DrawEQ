@@ -62,11 +62,10 @@ void CurveLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
         }
 
     // --- residual ribbon --------------------------------------------------
-    //
     // The signature element. When the fit is exact it vanishes and the
     // interface is quiet; when the fit is struggling it blooms at precisely the
     // frequency where it is struggling, so the user learns the plugin's limits
-    // by using it rather than by reading about them (CONTEXT.md 9.4).
+    // by using it rather than by reading about them.
     {
         // The closed band between the two lines: out along the ghost, back
         // along the plot.
@@ -115,7 +114,6 @@ void CurveLayer::paint (juce::Graphics& g, const CanvasContext& ctx)
     }
 
     // --- ghost stroke: what you drew --------------------------------------
-    //
     // Brighter while a commit is outstanding, because in that moment the ghost
     // is the only line telling the truth: the plot below it is still the old
     // filter, and the ribbon between them is the work not yet done.

@@ -98,7 +98,7 @@ TEST_CASE ("a constant offset is taken by the broadband trim", "[fitter]")
 TEST_CASE ("fitter regression corpus", "[fitter]")
 {
     // Recorded expectations. A change that makes any of these worse is a
-    // regression, whatever it improved elsewhere (CONTEXT.md 11).
+    // regression, whatever it improved elsewhere.
     struct Case { const char* name; CurveArray target; int bells; float maxAllowedDb; };
 
     const std::vector<Case> corpus {
@@ -139,7 +139,6 @@ TEST_CASE ("the unfittable case is reported, not hidden", "[fitter]")
     // A brick-wall notch two bins wide cannot be produced by any reasonable
     // biquad cascade. The contract is not that the fitter succeeds - it is that
     // maxErrorDb says so, loudly enough for the UI to offer Spectral mode
-    // (CONTEXT.md 7.5).
     const float err = fitError (notchCurve (-30.0f, 0.05f, 3000.0f), 12);
     INFO ("max error " << err << " dB");
     REQUIRE (err > 3.0f);
@@ -189,7 +188,7 @@ TEST_CASE ("warm start tracks a moving curve inside its budget", "[fitter][perfo
 
     INFO ("worst warm frame " << worstMs << " ms, worst error " << worstErr << " dB");
     REQUIRE (worstErr < 1.0f);
-    REQUIRE (worstMs < 2.0);        // CONTEXT.md 10
+    REQUIRE (worstMs < 2.0);        // the warm-fit budget
 }
 
 TEST_CASE ("cold start stays inside its budget at full band count", "[fitter][performance]")
@@ -211,7 +210,7 @@ TEST_CASE ("cold start stays inside its budget at full band count", "[fitter][pe
 
     const double ms = std::chrono::duration<double, std::milli> (t1 - t0).count();
     INFO ("cold fit " << ms << " ms, max error " << r.maxErrorDb << " dB");
-    REQUIRE (ms < 50.0);            // CONTEXT.md 10
+    REQUIRE (ms < 50.0);            // the cold-fit budget
 }
 
 TEST_CASE ("the starting shapes are shapes the filter can actually be", "[shapes][fitter]")
@@ -219,7 +218,6 @@ TEST_CASE ("the starting shapes are shapes the filter can actually be", "[shapes
     // Shapes.h claims that building them from bells and shelves makes them
     // reproducible by the Analog path. If that stopped being true, a user would
     // pick a preset and watch MAX ERR jump for no visible reason.
-    //
     // Bounds are set just above what is measured, not at some comfortable
     // round number - a threshold with an order of magnitude of slack would
     // never catch the regression it exists to catch.

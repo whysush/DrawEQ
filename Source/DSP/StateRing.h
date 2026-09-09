@@ -23,7 +23,7 @@ namespace draweq
 
     The audio thread never allocates, never frees, never blocks and never
     destroys: retired states go back through a lock-free FIFO for the worker to
-    reclaim (CONTEXT.md 5).
+    reclaim.
 */
 template <typename T, std::size_t PoolSize = 4, std::size_t FifoSize = 8>
 class StateRing

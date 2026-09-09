@@ -22,7 +22,7 @@ namespace shaping
 {
 
 /** Slide the whole curve along the log axis. Edges hold their end value, which
-    is what CONTEXT.md 6.1 specifies for out-of-range frequencies. */
+    is what we do for out-of-range frequencies. */
 inline void applyFreqShift (const CurveArray& in, CurveArray& out, float semitones) noexcept
 {
     if (std::abs (semitones) < 1.0e-4f)
@@ -90,7 +90,7 @@ inline void applyGaussianSmoothing (const CurveArray& in, CurveArray& out, float
     }
 }
 
-/** smooth parameter (0-100 %) -> sigma in octaves (CONTEXT.md 8.2). */
+/** smooth parameter (0-100 %) -> sigma in octaves. */
 inline float smoothPercentToOctaves (float percent) noexcept
 {
     return 0.015f * percent;   // 100 % -> 1.5 octaves

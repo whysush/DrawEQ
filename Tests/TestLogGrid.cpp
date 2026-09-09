@@ -129,6 +129,6 @@ TEST_CASE ("smoothing moves the curve away from the stroke, so the two are not o
     REQUIRE (worstLift > 1.0f);
 
     // And the raw stroke is untouched, which is what makes it safe to draw as
-    // the ghost and what makes smoothing non-destructive (CONTEXT.md 6.3).
+    // the ghost and what makes smoothing non-destructive.
     REQUIRE_THAT (double (raw[std::size_t (centre)]), WithinAbs (-14.0, 1.0e-6));
 }

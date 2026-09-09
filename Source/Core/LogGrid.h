@@ -9,7 +9,7 @@ namespace draweq
 /**
     The single frequency <-> index mapping used by everything: DSP, fitter, UI.
 
-    CONTEXT.md 13.4 - nothing anywhere else is allowed to write `log (hz / 20)`.
+    Nothing anywhere else is allowed to write `log (hz / 20)`.
     Two copies of this arithmetic drift apart the moment one of them is tweaked,
     and the symptom is a plot line that does not sit where the user drew.
 */

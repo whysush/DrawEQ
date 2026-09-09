@@ -99,7 +99,7 @@ jobs:
             unzip -oq pluginval.zip
           fi
 
-      # Strictness 10, as CONTEXT.md 11 requires. --skip-gui-tests only on
+      # Strictness 10, as required. --skip-gui-tests only on
       # Linux CI, which has no display server; the GUI tests do run locally and
       # on Windows.
       - name: pluginval

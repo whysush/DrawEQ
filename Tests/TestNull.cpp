@@ -41,7 +41,7 @@ double worstErrorDb (const std::vector<float>& out, const std::vector<float>& in
 TEST_CASE ("a flat curve nulls against dry audio", "[null]")
 {
     // The highest-value test in the suite: a whole class of gain, phase, shift
-    // and latency bugs shows up here and almost nowhere else (CONTEXT.md 11).
+    // and latency bugs shows up here and almost nowhere else.
     CurveModel model;
     CurveWorker worker;
     worker.setSource (&model);

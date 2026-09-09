@@ -1,5 +1,5 @@
 # All third-party code is fetched, pinned, and shallow-cloned.
-# Adding anything to this file needs a conversation first (CONTEXT.md 13.1).
+# Adding anything to this file needs a conversation first.
 
 include (FetchContent)
 

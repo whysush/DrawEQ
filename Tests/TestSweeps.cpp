@@ -36,7 +36,7 @@ CurveArray drawnCurve()
 
 TEST_CASE ("every sample rate and block size produces finite audio", "[sweep]")
 {
-    // CONTEXT.md 11: the full matrix, plus a prepare/release cycle in the
+    // The full matrix, plus a prepare/release cycle in the
     // middle, because hosts change both mid-session and that is where stale
     // buffer sizes surface.
     const double rates[] { 44100.0, 48000.0, 88200.0, 96000.0, 176400.0, 192000.0 };

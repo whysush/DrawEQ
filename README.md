@@ -46,7 +46,7 @@ went. You're not approximating a notch by feel. You're drawing one.
 
 ## What's in it
 
-| | |
+| | What it does |
 |---|---|
 | **Analog mode** | Fits a cascade of biquads to your stroke. Zero latency, ordinary EQ phase behaviour, and real bands you can edit afterwards. |
 | **Spectral mode** | Turns the curve straight into an FFT filter. Matches anything however sharp, and charges you either latency (linear phase) or phase rotation (minimum phase). |
@@ -85,7 +85,7 @@ If you prefer to place the folder yourself, every release also carries
 `DrawEQ-Windows-VST3.zip`. Unzip it, drop `DrawEQ.vst3` wherever your host
 looks.
 
-Note: The binaries for this tool aren't signed, so SmartScreen complains the first time you try to run it. It's purely a certificate issue and I guarantee you it's not a safety issue whatsoever. Kindly ignore it. If it's still bothering you, you may build it yourself using CI. 
+Note: The binaries aren't signed, so SmartScreen will complain the first time you run it. That's a certificate thing, not a code thing. Signing properly needs a certificate from a certificate authority that costs a few hundred a year, and I'm not there yet. If you'd rather not just take my word for it, the whole source is right here and you can build it yourself.
 
 ---
 
@@ -109,7 +109,7 @@ Please do report any bugs and crashes you come across.
 
 ## Using it
 
-| | |
+| | What it does |
 |---|---|
 | wheel | brush radius, measured in octaves, so it feels the same at 60 Hz as at 6 kHz |
 | `Shift` | lock to constant dB |
@@ -126,7 +126,7 @@ Slots behave how you would expect: click to select the one you are drawing into,
 ---
 
 <details>
-<summary><b>Building it yourself</b></summary>
+<summary>Want to build it yourself?</summary>
 
 You need CMake 3.22+ and a C++20 compiler. JUCE 8.0.9, Eigen 3.4 and Catch2 v3
 get fetched and pinned for you.
@@ -157,7 +157,7 @@ means it. To build one on a Windows machine:
 </details>
 
 <details>
-<summary><b>Tests</b></summary>
+<summary>What the tests actually check</summary>
 
 ```bash
 ctest --test-dir build --output-on-failure
@@ -190,7 +190,7 @@ pluginval --strictness-level 10 --validate build/.../DrawEQ.vst3
 </details>
 
 <details>
-<summary><b>Tools</b></summary>
+<summary>Extra tools I use on it</summary>
 
 None of these ship. They exist to answer questions the tests can't.
 
@@ -218,7 +218,7 @@ None of these ship. They exist to answer questions the tests can't.
 </details>
 
 <details>
-<summary><b>How it's put together</b></summary>
+<summary>How it works inside</summary>
 
 ```
 Source/
@@ -237,11 +237,6 @@ things. The audio thread never allocates, never locks, never destroys, and
 </details>
 
 ---
-
-Want the long version? [DECISIONS.md](DECISIONS.md) is every place the
-implementation departed from the original design, with the reasoning and the
-measurements that prompted it. It's the honest file. The bugs are in there
-too.
 
 Built with [JUCE](https://juce.com) and [Eigen](https://eigen.tuxfamily.org).
 Typefaces are JetBrains Mono and Space Grotesk, both SIL OFL.

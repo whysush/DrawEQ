@@ -19,7 +19,7 @@ namespace draweq
     streams are sample-aligned.
 
     Non-uniform partitioning would buy nothing at these IR lengths and costs a
-    great deal of complexity (CONTEXT.md 7.2).
+    great deal of complexity.
 */
 class ConvolutionEngine
 {

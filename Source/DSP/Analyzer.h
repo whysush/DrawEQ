@@ -17,7 +17,7 @@ namespace draweq
     Everything expensive - windowing, the transform, the log-frequency mapping,
     peak hold - happens on the UI thread, where being late costs a dropped frame
     rather than a dropout. The whole thing can be switched off, and when it is,
-    the audio thread does not even do the copy (CONTEXT.md 7.6).
+    the audio thread does not even do the copy.
 */
 class Analyzer
 {

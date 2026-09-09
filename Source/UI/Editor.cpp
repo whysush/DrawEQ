@@ -346,7 +346,7 @@ void DrawEQEditor::paint (juce::Graphics& g)
 
         // The error readout sits with the tools because it is a fact about the
         // drawing, not a setting. Amber above 3 dB, where the fitter stops
-        // telling the truth about the stroke (CONTEXT.md 7.5).
+        // telling the truth about the stroke.
         const bool poor = ui.valid && ui.maxErrorDb > 3.0f;
         auto readout = bottomStrip.reduced (6, 6).removeFromRight (112);
 

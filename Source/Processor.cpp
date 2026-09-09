@@ -262,7 +262,7 @@ void DrawEQProcessor::adoptState (FilterState* incoming) noexcept
     {
         // No crossfade: the cascade glides (f, G, Q) instead, which is both
         // cheaper and free of the comb filtering that fading two differently
-        // phased responses would produce (CONTEXT.md 5).
+        // phased responses would produce.
         cascade.setTargets (incoming->bands.data(), incoming->numBands);
         trimSmoother.snap (trimSmoother.get());
 
@@ -539,7 +539,7 @@ void DrawEQProcessor::getStateInformation (juce::MemoryBlock& destination)
 
     // The curve is not a parameter and never will be - a host has nowhere to
     // put 1024 automatable floats. It travels here instead, versioned, so a
-    // future format can migrate rather than load as noise (CONTEXT.md 8.1).
+    // future format can migrate rather than load as noise.
     storeCurrentIntoSlot (int (pMorphA->load()));
 
     const auto curveBlob = model.serialise();

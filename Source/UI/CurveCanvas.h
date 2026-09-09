@@ -14,7 +14,7 @@ class DrawEQProcessor;
 
     Coordinates only ever leave this class as (frequency, dB). The model is
     never told about pixels, which is what lets the same curve mean the same
-    thing at any window size (CONTEXT.md 6.1).
+    thing at any window size.
 */
 class CurveCanvas final : public juce::Component,
                           private juce::Timer

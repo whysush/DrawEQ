@@ -22,7 +22,7 @@ void MinimumPhase::computeImpulse (const float* magnitude, float* impulseOut)
     for (int k = 0; k <= half; ++k)
     {
         // Clamp before the log: a deep notch would otherwise give -inf here and
-        // poison every cepstral coefficient (CONTEXT.md 7.1 step 2).
+        // poison every cepstral coefficient.
         const float m = std::max (magnitude[k], 1.0e-6f);
         const float l = std::log (m);
         a[size_t (k)] = { l, 0.0f };

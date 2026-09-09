@@ -46,7 +46,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         NormalisableRange<float> { -12.0f, 12.0f, 0.01f }, 0.0f,
         juce::AudioParameterFloatAttributes().withLabel (" dB/dec")));
 
-    // CONTEXT.md 8.2 defaults this to 15 %, which blurs the stroke by about a
+    // The original design defaulted this to 15 %, which blurs the stroke by about a
     // fifth of an octave before the DSP ever sees it - a cut drawn at -14 dB
     // arrives as -12.8. That made sense when the fit had one frame to work in
     // and needed the help. It does not now: the committed fit handles a sharp

@@ -14,7 +14,7 @@ namespace draweq
 
     A slot holds a *curve*, not a band list. That distinction matters: Analog
     mode re-fits on recall, so a preset made today stays valid - and gets
-    better - if the fitter improves (CONTEXT.md 8.3).
+    better - if the fitter improves.
 */
 class PresetBank
 {

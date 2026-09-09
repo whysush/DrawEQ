@@ -66,7 +66,7 @@ void CursorLayer::paintErrorReadout (juce::Graphics& g, const CanvasContext& ctx
 
     // The number itself lives in the tool bar. What belongs on the canvas is
     // the offer, and only when it applies: quiet, non-modal, and pointing at
-    // the mode that would fit this exactly (CONTEXT.md 7.5).
+    // the mode that would fit this exactly.
     if (ctx.ui->maxErrorDb <= 3.0f || ctx.mode != Mode::analog)
         return;
 

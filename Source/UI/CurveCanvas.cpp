@@ -17,7 +17,6 @@ CurveCanvas::CurveCanvas (DrawEQProcessor& p)
    #if ! JUCE_LINUX
     // A crosshair is the right pointer for a surface you draw on, and it is set
     // everywhere it can safely be set.
-    //
     // Not on Linux. JUCE caches the standard X cursor handles beyond the life
     // of the X display, so asking for one here makes XCloseDisplay dereference
     // freed state during teardown: pluginval segfaults on every run, and the
@@ -25,8 +24,7 @@ CurveCanvas::CurveCanvas (DrawEQProcessor& p)
     // and no children passes, and adding this line back fails. Nothing in the
     // plugin's own memory is at fault; AddressSanitizer is silent right up to
     // the segfault inside libX11.
-    //
-    // Windows is the v1 target (CONTEXT.md 2) and is unaffected, and the canvas
+    // Windows is the v1 target and is unaffected, and the canvas
     // draws its own crosshair hairlines anyway (CursorLayer), so Linux loses
     // nothing visible. Worth revisiting when Linux becomes a real target.
     setMouseCursor (juce::MouseCursor::CrosshairCursor);

@@ -20,7 +20,7 @@ namespace draweq
     Why the broadband trim: bells and shelves cannot express a constant offset,
     so a target of "+4 dB everywhere" would otherwise be fit by two shelves
     fighting each other. One extra scalar removes a whole class of bad fits and
-    is free to apply (CONTEXT.md deviates here; see DECISIONS.md).
+    is free to apply.
 
     Warm start is the reason this can run live. Between two frames of a drag the
     curve barely moves, so starting from the previous solution and running a

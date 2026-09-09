@@ -35,7 +35,7 @@ struct CurveSnapshot
 
     // Morph is how a drawing becomes automatable: a 1024-point curve is not a
     // parameter any host will accept, but the interpolation between the live
-    // curve and a stored slot is a single float (CONTEXT.md 8.1).
+    // curve and a stored slot is a single float.
     CurveArray morphTarget {};
     float      morphAmount = 0.0f;
 

@@ -19,7 +19,7 @@ namespace draweq
 
 /**
     Everything on the audio thread lives here, and everything here obeys
-    CONTEXT.md 5: no allocation, no locks, no logging, no destruction of
+    The audio-thread rule: no allocation, no locks, no logging, no destruction of
     anything non-trivial.
 
     The processor never builds a filter. It receives one, crossfades to it, and

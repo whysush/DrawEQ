@@ -7,7 +7,7 @@ namespace draweq::Theme
 
 /**
     Every colour, metric and typeface in the plugin. A hex literal anywhere else
-    under Source/UI is a bug (CONTEXT.md 13.3).
+    under Source/UI is a bug.
 
     The direction is a dark instrument face drawn on a pixel grid: near-black
     chrome, a plate recessed a shade darker still, one cool blue for the
@@ -19,8 +19,8 @@ namespace draweq::Theme
     The curve itself stays antialiased, because it is the measurement and
     stair-stepping it would make it harder to read, not more honest.
 
-    Supersedes the earlier directions - the drafting surface of CONTEXT.md
-    9.1-9.2, the phosphor terminal, and the light grey face. See DECISIONS.md.
+    Supersedes the earlier directions - the drafting surface, the phosphor
+    terminal, and the light grey face.
 */
 namespace Colour
 {
@@ -108,7 +108,7 @@ namespace Metrics
     inline constexpr int faderCapWidth   = 11;
     inline constexpr int faderCapHeight  = 22;
 
-    /** Nothing animates for longer than this (CONTEXT.md 9.7). */
+    /** Nothing animates for longer than this. */
     inline constexpr int maxAnimationMs = 200;
 }
 
@@ -116,7 +116,7 @@ namespace Metrics
 juce::Font labelFont (float height = Metrics::labelSize);
 
 /** Every number. Tabular figures, so a live readout does not jitter as its
-    digits change (CONTEXT.md 9.3). */
+    digits change. */
 juce::Font monoFont (float height = Metrics::smallSize);
 
 juce::Font titleFont();

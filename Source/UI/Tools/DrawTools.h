@@ -28,7 +28,7 @@ CurveModel::Brush brushFor (Tool);
 
     This is the return leg of the Node tool, and it is what makes the tool
     bidirectional: drawing produces bands, dragging a band rewrites the curve,
-    drawing again re-fits. No mode switch, no conversion step (CONTEXT.md 9.6).
+    drawing again re-fits. No mode switch, no conversion step.
 */
 void curveFromBands (const Band* bands, int numBands, float trimDb, double sampleRate,
                      CurveArray& out);

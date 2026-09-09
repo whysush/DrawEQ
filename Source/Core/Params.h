@@ -7,7 +7,7 @@ namespace draweq::params
 
 /**
     Parameter IDs are permanent. Adding one is free; renaming or reordering one
-    breaks every project a user has saved (CONTEXT.md 13.5). If a parameter has
+    breaks every project a user has saved. If a parameter has
     to be retired, keep its ID and hide it from the editor.
 */
 namespace id

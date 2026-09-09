@@ -24,7 +24,7 @@ namespace draweq
     every edit, so a fast drag that generates two hundred mouse moves produces
     at most thirty fits - the intermediate strokes are dropped, not queued,
     because a fit of a curve the user has already drawn past is worthless
-    (CONTEXT.md 5).
+.
 */
 class CurveWorker
 {

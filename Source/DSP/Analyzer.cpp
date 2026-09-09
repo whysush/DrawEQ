@@ -241,7 +241,7 @@ void Analyzer::analyse (Ring& ring, std::vector<float>& window, std::array<float
         juce::ignoreUnused (hz);
 
         // No corrective tilt: summing constant-Q bands already makes pink noise
-        // read flat, and applying the +4.5 dB/octave of CONTEXT.md 7.6 on top
+        // read flat, and applying the +4.5 dB/octave tilt on top
         // of it would tilt the display the other way.
         const float db = 10.0f * std::log10 (std::max (energy, 1.0e-18f)) + kDisplayOffset;
 

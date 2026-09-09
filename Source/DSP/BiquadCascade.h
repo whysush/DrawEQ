@@ -16,7 +16,7 @@ namespace draweq
     precision, and - the reason that actually matters here - it misbehaves when
     its coefficients move every block, which is exactly what a live fit does.
     The SVF stays well conditioned at the bottom of the range and stays stable
-    under continuous modulation (CONTEXT.md 7.4).
+    under continuous modulation.
 
     Coefficients are recomputed per block from smoothed (f, G, Q). Raw
     coefficients are never interpolated: the path between two valid coefficient

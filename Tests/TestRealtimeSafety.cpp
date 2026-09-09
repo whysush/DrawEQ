@@ -11,12 +11,11 @@ using namespace draweq;
 
 // ---------------------------------------------------------------------------
 // A global allocation trap.
-//
 // Replacing operator new for the whole test binary is heavy-handed, and that is
 // the point: it means nothing inside the guarded region can allocate without
-// being counted, including code we did not think to look at. CONTEXT.md 11 asks
+// being counted, including code we did not think to look at. The test plan asks
 // for exactly this check, and it is the only way to keep the audio thread's
-// rules from rotting over time (CONTEXT.md 5).
+// rules from rotting over time.
 // ---------------------------------------------------------------------------
 
 namespace
